@@ -47,7 +47,7 @@ type FormState = {
   style: string;
   colors: string;
   goal: string;
-  model: string;
+  generationMode: GenerationMode;
 };
 
 type PanelTab = "compose" | "preview" | "code" | "handoff";
@@ -85,6 +85,7 @@ type AuthForm = {
 };
 
 type AuthMode = "signin" | "signup";
+type GenerationMode = "code" | "plan";
 
 const sampleDesign: DesignSpec = {
   title: "VisionOS Frames",
@@ -276,7 +277,7 @@ const initialForm: FormState = {
   style: "Lovable-inspired, premium, tactile, modern",
   colors: "Graphite, porcelain, signal green, electric blue, coral",
   goal: "Generate a practical mobile design spec with a realistic phone preview",
-  model: "gemini-2.5-flash"
+  generationMode: "code"
 };
 
 const platforms = ["Mobile app", "Landing page", "Dashboard", "Storefront"];
@@ -369,21 +370,20 @@ export default function Home() {
     setError("");
 
     try {
-      const prototype = await generatePrototype(form);
-      setGeneratedPrototype(prototype);
-
-      if (!isStaticExport) {
+      if (form.generationMode === "plan") {
         try {
           const payload = await generateFromServer(form);
           setDesign(payload);
         } catch {
           setDesign(buildLocalDesignSpec(form));
         }
+        setActivePanel("handoff");
       } else {
+        const prototype = await generatePrototype(form);
+        setGeneratedPrototype(prototype);
         setDesign(buildLocalDesignSpec(form));
+        setActivePanel("code");
       }
-
-      setActivePanel("code");
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -395,7 +395,10 @@ export default function Home() {
     }
   }
 
-  function updateField(field: keyof FormState, value: string) {
+  function updateField<Field extends keyof FormState>(
+    field: Field,
+    value: FormState[Field]
+  ) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
@@ -781,18 +784,38 @@ export default function Home() {
             />
           </label>
 
-          <div className="field-grid">
-            <label>
-              Model
-              <input
-                value={form.model}
-                onChange={(event) => updateField("model", event.target.value)}
-              />
-            </label>
+          <fieldset>
+            <legend>Prompt mode</legend>
+            <div className="segmented mode-segmented">
+              <button
+                className={form.generationMode === "code" ? "selected" : ""}
+                onClick={() => updateField("generationMode", "code")}
+                type="button"
+              >
+                Code generation
+              </button>
+              <button
+                className={form.generationMode === "plan" ? "selected" : ""}
+                onClick={() => updateField("generationMode", "plan")}
+                type="button"
+              >
+                Planning
+              </button>
+            </div>
+          </fieldset>
 
+          <div className="field-grid">
+            <div className="key-safety">
+              <strong>{form.generationMode === "code" ? "Code model" : "Planning model"}</strong>
+              <span>
+                {form.generationMode === "code"
+                  ? "3.1 Pro low thinking"
+                  : "3.1 Pro high thinking"}
+              </span>
+            </div>
             <div className="key-safety">
               <strong>Access</strong>
-              <span>Signed-in workspace</span>
+              <span>Server-side Vertex key</span>
             </div>
           </div>
 
@@ -802,7 +825,9 @@ export default function Home() {
             </p>
           ) : (
             <p className="helper-copy">
-              Secure generation is ready for this workspace.
+              {form.generationMode === "code"
+                ? "Code mode renders plain HTML, CSS, and JavaScript in the preview."
+                : "Planning mode creates the design strategy, sections, components, and handoff notes."}
             </p>
           )}
 
@@ -818,7 +843,11 @@ export default function Home() {
           </div>
 
           <button className="generate-button" disabled={loading} type="submit">
-            {loading ? "Generating..." : "Generate prototype"}
+            {loading
+              ? "Generating..."
+              : form.generationMode === "code"
+                ? "Generate prototype"
+                : "Generate plan"}
           </button>
         </form>
 

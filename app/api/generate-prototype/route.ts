@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 
 type PrototypeRequest = {
@@ -11,7 +10,7 @@ type PrototypeRequest = {
   style: string;
 };
 
-const fallbackModel = "gemini-2.5-flash";
+const fallbackCodeModel = "gemini-3.1-pro-preview";
 
 function asText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -52,6 +51,56 @@ function parseJson(text: string) {
   return JSON.parse(jsonText);
 }
 
+async function generateWithVertexExpress({
+  apiKey,
+  contents,
+  model,
+  thinkingLevel
+}: {
+  apiKey: string;
+  contents: string;
+  model: string;
+  thinkingLevel: "LOW" | "HIGH";
+}) {
+  const endpoint = `https://aiplatform.googleapis.com/v1/publishers/google/models/${encodeURIComponent(model)}:generateContent`;
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: contents }]
+        }
+      ],
+      generationConfig: {
+        responseMimeType: "application/json",
+        thinkingConfig: {
+          thinkingLevel
+        }
+      }
+    })
+  });
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(JSON.stringify(payload));
+  }
+
+  const text = payload.candidates?.[0]?.content?.parts
+    ?.map((part: { text?: string }) => part.text ?? "")
+    .join("");
+
+  if (!text) {
+    throw new Error("Vertex returned an empty response.");
+  }
+
+  return text;
+}
+
 export async function POST(request: Request) {
   const apiKey = process.env.VERTEX_API_KEY ?? process.env.GOOGLE_API_KEY;
 
@@ -81,16 +130,17 @@ export async function POST(request: Request) {
   }
 
   try {
-    const ai = new GoogleGenAI({ vertexai: true, apiKey });
-    const response = await ai.models.generateContent({
-      model: asText(body?.model) || process.env.VERTEX_MODEL || fallbackModel,
+    const text = await generateWithVertexExpress({
+      apiKey,
+      model:
+        process.env.VERTEX_CODE_MODEL ??
+        process.env.VERTEX_MODEL ??
+        fallbackCodeModel,
       contents: buildPrompt(input),
-      config: {
-        responseMimeType: "application/json"
-      }
+      thinkingLevel: "LOW"
     });
 
-    return NextResponse.json({ prototype: parseJson(response.text ?? "") });
+    return NextResponse.json({ prototype: parseJson(text) });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Prototype generation failed.";
