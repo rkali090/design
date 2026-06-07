@@ -50,8 +50,6 @@ type FormState = {
   generationMode: GenerationMode;
 };
 
-type PanelTab = "compose" | "preview" | "code" | "handoff";
-
 type DevicePreset = {
   name: string;
   width: number;
@@ -78,6 +76,26 @@ type StoredUser = {
   passwordHash: string;
 };
 
+type UserProfile = {
+  company: string;
+  role: string;
+  timezone: string;
+};
+
+type WorkspaceSettings = {
+  autoSaveSnapshots: boolean;
+  compactCode: boolean;
+  defaultPlatform: string;
+  defaultStyle: string;
+};
+
+type CreditEntry = {
+  amount: number;
+  createdAt: string;
+  description: string;
+  id: string;
+};
+
 type AuthForm = {
   email: string;
   name: string;
@@ -86,111 +104,121 @@ type AuthForm = {
 
 type AuthMode = "signin" | "signup";
 type GenerationMode = "code" | "plan";
+type PanelTab =
+  | "compose"
+  | "preview"
+  | "code"
+  | "handoff"
+  | "profile"
+  | "settings"
+  | "credits"
+  | "models";
 
-const sampleDesign: DesignSpec = {
-  title: "VisionOS Frames",
+type ModelSelection = {
+  codeModel: string;
+  planModel: string;
+};
+
+const emptyDesign: DesignSpec = {
+  title: "No design generated yet",
   summary:
-    "A confident mobile buying flow that blends fast AI direction, tactile product browsing, and clear purchase momentum.",
+    "Create a prompt and generate a real design direction from your workspace.",
   palette: [
-    { name: "Graphite", hex: "#171717", usage: "navigation, titles, and simulator chrome" },
-    { name: "Porcelain", hex: "#f8f1e5", usage: "soft mobile surfaces" },
-    { name: "Signal Green", hex: "#22c55e", usage: "primary generate and approval states" },
-    { name: "Electric Blue", hex: "#3b82f6", usage: "focus rings and active modules" },
-    { name: "Coral", hex: "#fb7185", usage: "creative accents and warnings" }
+    { name: "Ink", hex: "#111214", usage: "primary text and strong contrast" },
+    { name: "Canvas", hex: "#fffaf2", usage: "workspace surfaces" },
+    { name: "Action", hex: "#22c55e", usage: "primary action states" },
+    { name: "Focus", hex: "#3b82f6", usage: "focus rings and selected controls" }
   ],
   typeScale: [
     {
-      role: "App title",
-      size: "31",
-      weight: "780",
-      usage: "top-level mobile screen title"
-    },
-    {
-      role: "Module label",
-      size: "12",
-      weight: "800",
-      usage: "compact controls and simulator labels"
+      role: "Screen title",
+      size: "28",
+      weight: "760",
+      usage: "generated headings"
     },
     {
       role: "Body",
       size: "15",
       weight: "450",
-      usage: "generated rationale, notes, and product guidance"
+      usage: "generated supporting copy"
+    },
+    {
+      role: "Control",
+      size: "13",
+      weight: "850",
+      usage: "buttons, tabs, and labels"
     }
   ],
   layoutSections: [
     {
-      name: "Prompt Composer",
-      purpose: "Let the maker describe a full screen in one natural-language request.",
-      mobileTreatment:
-        "Large sticky composer with a one-tap generate button and compact advanced controls.",
-      keyElements: ["Prompt box", "Generate button", "Model selector", "Key safety badge"]
+      name: "Brief",
+      purpose: "Capture the product direction before generation.",
+      mobileTreatment: "Keep the prompt, platform, and goal in one focused flow.",
+      keyElements: ["Prompt", "Product", "Audience", "Goal"]
     },
     {
-      name: "Mobile Simulator",
-      purpose: "Show the direction as a believable phone screen instead of raw text.",
-      mobileTreatment:
-        "Full-width phone preview on small devices with fixed dimensions and no layout jump.",
-      keyElements: ["Status bar", "Generated hero", "Color rail", "Section cards"]
+      name: "Preview",
+      purpose: "Render the generated direction as a believable interface.",
+      mobileTreatment: "Use the selected device preset to frame the output.",
+      keyElements: ["Device", "Generated sections", "Palette"]
     },
     {
-      name: "Handoff Spec",
-      purpose: "Convert the generated direction into implementation-ready chunks.",
-      mobileTreatment:
-        "Stacked rows for palette, type, components, microcopy, and build notes.",
-      keyElements: ["Palette rows", "Type scale", "Component states", "Build notes"]
+      name: "Handoff",
+      purpose: "Keep the generated decisions ready for implementation.",
+      mobileTreatment: "Group palette, type, components, and notes into compact cards.",
+      keyElements: ["Palette", "Type scale", "Components", "Notes"]
     }
   ],
   components: [
     {
-      name: "AI composer",
-      behavior: "Accepts a design prompt, locks while generating, and preserves the last result.",
-      states: ["idle", "focused", "generating", "error"]
+      name: "Prompt composer",
+      behavior: "Accepts the product brief and sends it to the selected generation mode.",
+      states: ["idle", "focused", "generating"]
     },
     {
-      name: "Phone simulator",
-      behavior: "Reflects generated sections with stable card sizes and color accents.",
-      states: ["sample", "generated"]
+      name: "Live renderer",
+      behavior: "Shows generated HTML/CSS/JS in a sandboxed preview.",
+      states: ["empty", "rendered"]
     },
     {
-      name: "Handoff drawer",
-      behavior: "Presents dense implementation details in scan-friendly groups.",
-      states: ["expanded", "updating"]
+      name: "Workspace controls",
+      behavior: "Tracks credits, model choices, profile, settings, and snapshots.",
+      states: ["ready", "updating"]
     }
   ],
-  microcopy: ["Ask Vertex to design", "Mobile preview", "Ready for handoff"],
+  microcopy: ["Write a prompt", "Choose a mode", "Generate the first result"],
   implementationNotes: [
-    "Keep the first screen focused on the user's primary action.",
-    "Use stable spacing so generated content never shifts the layout abruptly.",
-    "Keep simulator cards fixed-height enough to avoid shifting while content changes."
+    "Generated results will replace this starter state.",
+    "Credits update when the generation route returns successfully.",
+    "Model choices are stored on this device for the signed-in workspace."
   ]
 };
 
-const samplePrototype: PrototypeCode = {
-  title: "VisionOS Frames",
+const emptyPrototype: PrototypeCode = {
+  title: "No prototype generated yet",
   html: `
 <main class="prototype-app">
   <section class="hero">
-    <p class="label">AI frame finder</p>
-    <h1>Find frames that feel made for you.</h1>
-    <p>Compare fit, color, and lens options in a guided mobile shopping flow.</p>
-    <button data-action="start">Start fitting</button>
+    <p class="label">Workspace ready</p>
+    <h1>Your generated interface will render here.</h1>
+    <p>Choose code generation, submit a prompt, and the app will render plain HTML, CSS, and JavaScript.</p>
+    <button data-action="start">Waiting for prompt</button>
   </section>
   <section class="cards">
     <article>
       <span>01</span>
-      <strong>Face shape scan</strong>
-      <p>Ask three quick style questions before showing recommendations.</p>
+      <strong>Prompt</strong>
+      <p>Describe the product and primary user action.</p>
     </article>
     <article>
       <span>02</span>
-      <strong>Frame shortlist</strong>
-      <p>Save, compare, and narrow picks with clear fit confidence.</p>
+      <strong>Generate</strong>
+      <p>The selected model creates implementation-ready code.</p>
     </article>
     <article>
       <span>03</span>
-      <strong>Checkout assist</strong>
-      <p>Keep prescription and lens choices visible before purchase.</p>
+      <strong>Render</strong>
+      <p>The sandbox preview updates with the generated result.</p>
     </article>
   </section>
 </main>`.trim(),
@@ -269,22 +297,21 @@ document.querySelector('[data-action="start"]')?.addEventListener('click', () =>
 };
 
 const initialForm: FormState = {
-  prompt:
-    "Create a premium mobile app screen for a glasses store that helps shoppers compare frames, preview fit, and checkout quickly.",
-  product: "AI design studio",
+  prompt: "",
+  product: "",
   platform: "Mobile app",
-  audience: "Founders and makers who want polished UI direction fast",
-  style: "Lovable-inspired, premium, tactile, modern",
-  colors: "Graphite, porcelain, signal green, electric blue, coral",
-  goal: "Generate a practical mobile design spec with a realistic phone preview",
+  audience: "",
+  style: "Premium, clean, mobile-first",
+  colors: "",
+  goal: "",
   generationMode: "code"
 };
 
 const platforms = ["Mobile app", "Landing page", "Dashboard", "Storefront"];
 const quickPrompts = [
-  "Fashion ecommerce app with AI styling",
-  "Restaurant booking app for busy cities",
-  "Fitness habit tracker for beginners"
+  "AI shopping assistant",
+  "Appointment booking flow",
+  "Personal finance onboarding"
 ];
 
 const devicePresets: DevicePreset[] = [
@@ -294,10 +321,70 @@ const devicePresets: DevicePreset[] = [
   { name: "Fold", width: 520 }
 ];
 
+const workspaceTabs: { id: PanelTab; label: string }[] = [
+  { id: "compose", label: "Brief" },
+  { id: "preview", label: "Preview" },
+  { id: "code", label: "Code" },
+  { id: "handoff", label: "Handoff" },
+  { id: "profile", label: "Profile" },
+  { id: "settings", label: "Settings" },
+  { id: "credits", label: "Credits" },
+  { id: "models", label: "Models" }
+];
+
 const isStaticExport = process.env.NEXT_PUBLIC_STATIC_EXPORT === "true";
 const authSessionCookieName = "design_studio_session";
 const authUsersStorageKey = "design-studio-users";
 const snapshotsStorageKey = "design-studio-snapshots";
+const profileStorageKey = "design-studio-profile";
+const settingsStorageKey = "design-studio-settings";
+const creditsStorageKey = "design-studio-credits";
+const modelsStorageKey = "design-studio-models";
+
+const defaultSettings: WorkspaceSettings = {
+  autoSaveSnapshots: true,
+  compactCode: false,
+  defaultPlatform: "Mobile app",
+  defaultStyle: "Premium, clean, mobile-first"
+};
+
+const defaultProfile: UserProfile = {
+  company: "",
+  role: "Product builder",
+  timezone: "UTC"
+};
+
+const defaultCredits: CreditEntry[] = [
+  {
+    amount: 100,
+    createdAt: new Date().toISOString(),
+    description: "Starting workspace credits",
+    id: "starting-credits"
+  }
+];
+
+const defaultModels: ModelSelection = {
+  codeModel: "gemini-3.1-pro-preview",
+  planModel: "gemini-3.1-pro-preview"
+};
+
+const codeModelOptions = [
+  {
+    id: "gemini-3.1-pro-preview",
+    name: "Gemini 3.1 Pro",
+    detail: "LOW thinking for fast HTML/CSS/JS generation.",
+    credits: 2
+  }
+];
+
+const planModelOptions = [
+  {
+    id: "gemini-3.1-pro-preview",
+    name: "Gemini 3.1 Pro",
+    detail: "HIGH thinking for planning and brainstorming.",
+    credits: 5
+  }
+];
 
 export default function Home() {
   const [activePanel, setActivePanel] = useState<PanelTab>("compose");
@@ -311,19 +398,31 @@ export default function Home() {
   const [authReady, setAuthReady] = useState(true);
   const [currentUser, setCurrentUser] = useState<StoredUser | null>(null);
   const [form, setForm] = useState<FormState>(initialForm);
-  const [design, setDesign] = useState<DesignSpec>(sampleDesign);
+  const [design, setDesign] = useState<DesignSpec>(emptyDesign);
   const [generatedPrototype, setGeneratedPrototype] =
-    useState<PrototypeCode>(samplePrototype);
+    useState<PrototypeCode>(emptyPrototype);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedDevice, setSelectedDevice] = useState(devicePresets[1]);
   const [snapshotsReady, setSnapshotsReady] = useState(false);
   const [savedSnapshots, setSavedSnapshots] = useState<SavedSnapshot[]>([]);
+  const [profile, setProfile] = useState<UserProfile>(defaultProfile);
+  const [settings, setSettings] = useState<WorkspaceSettings>(defaultSettings);
+  const [credits, setCredits] = useState<CreditEntry[]>(defaultCredits);
+  const [models, setModels] = useState<ModelSelection>(defaultModels);
 
   const dominantColors = useMemo(
     () => design.palette.slice(0, 5),
     [design.palette]
   );
+  const creditBalance = useMemo(
+    () => credits.reduce((total, entry) => total + entry.amount, 0),
+    [credits]
+  );
+  const generationCost = form.generationMode === "code" ? 2 : 5;
+  const selectedModel =
+    form.generationMode === "code" ? models.codeModel : models.planModel;
+  const generatedCount = credits.filter((entry) => entry.amount < 0).length;
 
   useEffect(() => {
     const users = readUsers();
@@ -354,6 +453,13 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    setProfile(readStored<UserProfile>(profileStorageKey, defaultProfile));
+    setSettings(readStored<WorkspaceSettings>(settingsStorageKey, defaultSettings));
+    setCredits(readStored<CreditEntry[]>(creditsStorageKey, defaultCredits));
+    setModels(readStored<ModelSelection>(modelsStorageKey, defaultModels));
+  }, []);
+
+  useEffect(() => {
     if (!snapshotsReady) {
       return;
     }
@@ -364,24 +470,53 @@ export default function Home() {
     );
   }, [savedSnapshots, snapshotsReady]);
 
+  useEffect(() => {
+    window.localStorage.setItem(profileStorageKey, JSON.stringify(profile));
+  }, [profile]);
+
+  useEffect(() => {
+    window.localStorage.setItem(settingsStorageKey, JSON.stringify(settings));
+  }, [settings]);
+
+  useEffect(() => {
+    window.localStorage.setItem(creditsStorageKey, JSON.stringify(credits));
+  }, [credits]);
+
+  useEffect(() => {
+    window.localStorage.setItem(modelsStorageKey, JSON.stringify(models));
+  }, [models]);
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setError("");
 
     try {
+      if (!form.prompt.trim() || !form.product.trim() || !form.goal.trim()) {
+        throw new Error("Add a prompt, product name, and primary goal first.");
+      }
+
+      if (creditBalance < generationCost) {
+        throw new Error("Not enough credits for this generation.");
+      }
+
       if (form.generationMode === "plan") {
         try {
-          const payload = await generateFromServer(form);
+          const payload = await generateFromServer(form, models.planModel);
           setDesign(payload);
+          recordCredit(-generationCost, "Planning generation");
+          if (settings.autoSaveSnapshots) {
+            saveSnapshot(payload);
+          }
         } catch {
           setDesign(buildLocalDesignSpec(form));
         }
         setActivePanel("handoff");
       } else {
-        const prototype = await generatePrototype(form);
+        const prototype = await generatePrototype(form, models.codeModel);
         setGeneratedPrototype(prototype);
         setDesign(buildLocalDesignSpec(form));
+        recordCredit(-generationCost, "Code generation");
         setActivePanel("code");
       }
     } catch (requestError) {
@@ -406,8 +541,34 @@ export default function Home() {
     setAuthForm((current) => ({ ...current, [field]: value }));
   }
 
+  function updateCurrentUser(field: "name", value: string) {
+    if (!currentUser) {
+      return;
+    }
+
+    const nextUser = { ...currentUser, [field]: value };
+    const nextUsers = readUsers().map((user) =>
+      user.id === nextUser.id ? nextUser : user
+    );
+
+    window.localStorage.setItem(authUsersStorageKey, JSON.stringify(nextUsers));
+    setCurrentUser(nextUser);
+  }
+
   function applyQuickPrompt(prompt: string) {
     updateField("prompt", `Create a mobile-first ${prompt.toLowerCase()} with a Lovable-style builder experience and an implementation-ready handoff.`);
+  }
+
+  function recordCredit(amount: number, description: string) {
+    setCredits((current) => [
+      {
+        amount,
+        createdAt: new Date().toISOString(),
+        description,
+        id: crypto.randomUUID()
+      },
+      ...current
+    ]);
   }
 
   async function onAuthSubmit(event: FormEvent<HTMLFormElement>) {
@@ -490,10 +651,10 @@ export default function Home() {
     URL.revokeObjectURL(url);
   }
 
-  function saveSnapshot() {
+  function saveSnapshot(nextDesign = design) {
     const snapshot: SavedSnapshot = {
       createdAt: new Date().toISOString(),
-      design,
+      design: nextDesign,
       id: crypto.randomUUID()
     };
 
@@ -650,14 +811,25 @@ export default function Home() {
           </div>
         </div>
         <div className="topbar-actions">
+          <span className="credit-pill">{creditBalance} credits</span>
           <span className="user-pill">{currentUser.name}</span>
           <button className="sign-out-button" onClick={signOut} type="button">
             Sign out
           </button>
-          <a className="docs-link" href="https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview">
-            Vertex docs
-          </a>
         </div>
+      </nav>
+
+      <nav className="workspace-nav" aria-label="Workspace">
+        {workspaceTabs.map((tab) => (
+          <button
+            className={activePanel === tab.id ? "selected" : ""}
+            key={tab.id}
+            onClick={() => setActivePanel(tab.id)}
+            type="button"
+          >
+            {tab.label}
+          </button>
+        ))}
       </nav>
 
       <section className="hero-band">
@@ -671,34 +843,16 @@ export default function Home() {
       </section>
 
       <nav className="mobile-tabs" aria-label="Workspace panels">
-        <button
-          className={activePanel === "compose" ? "selected" : ""}
-          onClick={() => setActivePanel("compose")}
-          type="button"
-        >
-          Brief
-        </button>
-        <button
-          className={activePanel === "preview" ? "selected" : ""}
-          onClick={() => setActivePanel("preview")}
-          type="button"
-        >
-          Preview
-        </button>
-        <button
-          className={activePanel === "code" ? "selected" : ""}
-          onClick={() => setActivePanel("code")}
-          type="button"
-        >
-          Code
-        </button>
-        <button
-          className={activePanel === "handoff" ? "selected" : ""}
-          onClick={() => setActivePanel("handoff")}
-          type="button"
-        >
-          Handoff
-        </button>
+        {workspaceTabs.map((tab) => (
+          <button
+            className={activePanel === tab.id ? "selected" : ""}
+            key={tab.id}
+            onClick={() => setActivePanel(tab.id)}
+            type="button"
+          >
+            {tab.label}
+          </button>
+        ))}
       </nav>
 
       <section className="studio-grid">
@@ -808,14 +962,12 @@ export default function Home() {
             <div className="key-safety">
               <strong>{form.generationMode === "code" ? "Code model" : "Planning model"}</strong>
               <span>
-                {form.generationMode === "code"
-                  ? "3.1 Pro low thinking"
-                  : "3.1 Pro high thinking"}
+                {selectedModel}
               </span>
             </div>
             <div className="key-safety">
-              <strong>Access</strong>
-              <span>Server-side Vertex key</span>
+              <strong>Run cost</strong>
+              <span>{generationCost} credits</span>
             </div>
           </div>
 
@@ -837,7 +989,7 @@ export default function Home() {
             <button onClick={() => setForm(initialForm)} type="button">
               Reset brief
             </button>
-            <button onClick={saveSnapshot} type="button">
+            <button onClick={() => saveSnapshot()} type="button">
               Save snapshot
             </button>
           </div>
@@ -846,8 +998,8 @@ export default function Home() {
             {loading
               ? "Generating..."
               : form.generationMode === "code"
-                ? "Generate prototype"
-                : "Generate plan"}
+                ? `Generate prototype (${generationCost})`
+                : `Generate plan (${generationCost})`}
           </button>
         </form>
 
@@ -920,7 +1072,7 @@ export default function Home() {
         </section>
 
         <section
-          className={`code-panel ${activePanel === "code" ? "is-active" : ""}`}
+          className={`code-panel ${settings.compactCode ? "compact-code" : ""} ${activePanel === "code" ? "is-active" : ""}`}
           aria-label="Generated prototype"
         >
           <div className="panel-heading">
@@ -973,7 +1125,7 @@ export default function Home() {
             <button onClick={downloadHandoff} type="button">
               Download
             </button>
-            <button onClick={saveSnapshot} type="button">
+            <button onClick={() => saveSnapshot()} type="button">
               Save
             </button>
           </div>
@@ -1049,6 +1201,254 @@ export default function Home() {
               <p className="note">Save a snapshot to compare directions later.</p>
             )}
           </SpecGroup>
+        </section>
+
+        <section
+          className={`profile-panel ${activePanel === "profile" ? "is-active" : ""}`}
+          aria-label="Profile"
+        >
+          <div className="panel-heading">
+            <span className="eyebrow">Profile</span>
+            <h2>{currentUser.name}</h2>
+          </div>
+
+          <div className="profile-card">
+            <span>Signed in as</span>
+            <strong>{currentUser.email}</strong>
+            <small>Joined {new Date(currentUser.createdAt).toLocaleDateString()}</small>
+          </div>
+
+          <div className="field-grid">
+            <label>
+              Name
+              <input
+                value={currentUser.name}
+                onChange={(event) => updateCurrentUser("name", event.target.value)}
+              />
+            </label>
+            <label>
+              Company
+              <input
+                value={profile.company}
+                onChange={(event) =>
+                  setProfile((current) => ({ ...current, company: event.target.value }))
+                }
+                placeholder="Company or project"
+              />
+            </label>
+          </div>
+
+          <div className="field-grid">
+            <label>
+              Role
+              <input
+                value={profile.role}
+                onChange={(event) =>
+                  setProfile((current) => ({ ...current, role: event.target.value }))
+                }
+              />
+            </label>
+            <label>
+              Timezone
+              <input
+                value={profile.timezone}
+                onChange={(event) =>
+                  setProfile((current) => ({ ...current, timezone: event.target.value }))
+                }
+              />
+            </label>
+          </div>
+
+          <div className="stats-grid">
+            <article>
+              <span>Credits</span>
+              <strong>{creditBalance}</strong>
+            </article>
+            <article>
+              <span>Generations</span>
+              <strong>{generatedCount}</strong>
+            </article>
+            <article>
+              <span>Snapshots</span>
+              <strong>{savedSnapshots.length}</strong>
+            </article>
+          </div>
+        </section>
+
+        <section
+          className={`settings-panel ${activePanel === "settings" ? "is-active" : ""}`}
+          aria-label="Settings"
+        >
+          <div className="panel-heading">
+            <span className="eyebrow">Settings</span>
+            <h2>Workspace preferences</h2>
+          </div>
+
+          <div className="field-grid">
+            <label>
+              Default output type
+              <select
+                value={settings.defaultPlatform}
+                onChange={(event) =>
+                  setSettings((current) => ({
+                    ...current,
+                    defaultPlatform: event.target.value
+                  }))
+                }
+              >
+                {platforms.map((platform) => (
+                  <option key={platform}>{platform}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Default style
+              <input
+                value={settings.defaultStyle}
+                onChange={(event) =>
+                  setSettings((current) => ({
+                    ...current,
+                    defaultStyle: event.target.value
+                  }))
+                }
+              />
+            </label>
+          </div>
+
+          <div className="settings-list">
+            <label className="toggle-row">
+              <input
+                checked={settings.autoSaveSnapshots}
+                onChange={(event) =>
+                  setSettings((current) => ({
+                    ...current,
+                    autoSaveSnapshots: event.target.checked
+                  }))
+                }
+                type="checkbox"
+              />
+              <span>
+                <strong>Auto-save planning snapshots</strong>
+                <small>Keep successful planning runs in the snapshot history.</small>
+              </span>
+            </label>
+            <label className="toggle-row">
+              <input
+                checked={settings.compactCode}
+                onChange={(event) =>
+                  setSettings((current) => ({
+                    ...current,
+                    compactCode: event.target.checked
+                  }))
+                }
+                type="checkbox"
+              />
+              <span>
+                <strong>Compact code view</strong>
+                <small>Reduce code block height for quicker scanning.</small>
+              </span>
+            </label>
+          </div>
+
+          <button
+            className="generate-button"
+            onClick={() =>
+              setForm((current) => ({
+                ...current,
+                platform: settings.defaultPlatform,
+                style: settings.defaultStyle
+              }))
+            }
+            type="button"
+          >
+            Apply defaults to brief
+          </button>
+        </section>
+
+        <section
+          className={`credits-panel ${activePanel === "credits" ? "is-active" : ""}`}
+          aria-label="Credits"
+        >
+          <div className="panel-heading">
+            <span className="eyebrow">Credits</span>
+            <h2>{creditBalance} available</h2>
+          </div>
+
+          <div className="stats-grid">
+            <article>
+              <span>Code generation</span>
+              <strong>2</strong>
+            </article>
+            <article>
+              <span>Planning</span>
+              <strong>5</strong>
+            </article>
+            <article>
+              <span>Runs used</span>
+              <strong>{generatedCount}</strong>
+            </article>
+          </div>
+
+          <div className="credit-actions">
+            <button onClick={() => recordCredit(25, "Manual top up")} type="button">
+              Add 25 credits
+            </button>
+            <button onClick={() => setCredits(defaultCredits)} type="button">
+              Reset credits
+            </button>
+          </div>
+
+          <div className="ledger-list">
+            {credits.map((entry) => (
+              <article key={entry.id}>
+                <div>
+                  <strong>{entry.description}</strong>
+                  <span>
+                    {new Date(entry.createdAt).toLocaleString([], {
+                      dateStyle: "medium",
+                      timeStyle: "short"
+                    })}
+                  </span>
+                </div>
+                <b className={entry.amount > 0 ? "positive" : "negative"}>
+                  {entry.amount > 0 ? "+" : ""}{entry.amount}
+                </b>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section
+          className={`models-panel ${activePanel === "models" ? "is-active" : ""}`}
+          aria-label="Model selection"
+        >
+          <div className="panel-heading">
+            <span className="eyebrow">Models</span>
+            <h2>Generation modes</h2>
+          </div>
+
+          <ModelPicker
+            label="Code generation"
+            models={codeModelOptions}
+            selected={models.codeModel}
+            onSelect={(model) =>
+              setModels((current) => ({ ...current, codeModel: model }))
+            }
+          />
+
+          <ModelPicker
+            label="Planning and brainstorming"
+            models={planModelOptions}
+            selected={models.planModel}
+            onSelect={(model) =>
+              setModels((current) => ({ ...current, planModel: model }))
+            }
+          />
+
+          <p className="note">
+            Code mode uses low thinking for faster prototype generation. Planning uses
+            high thinking for deeper strategy and handoff output.
+          </p>
         </section>
       </section>
     </main>
@@ -1184,8 +1584,8 @@ function LandingPage({
             </div>
             <div className="preview-hero">
               <div>
-                <span className="mini-label">Generated concept</span>
-                <h2>FrameFlow Checkout</h2>
+                <span className="mini-label">Live workspace</span>
+                <h2>Your generated screen</h2>
               </div>
               <div className="color-dots" aria-label="Preview palette">
                 <span style={{ background: "#171717" }} />
@@ -1195,13 +1595,13 @@ function LandingPage({
               </div>
             </div>
             <p className="summary">
-              A guided mobile flow for comparing frames, confirming fit, and checking out
-              with confidence.
+              Enter a prompt, choose a mode, and render the result as code or a
+              planning handoff.
             </p>
             <div className="landing-preview-card">
               <span>01</span>
-              <strong>Generated UI</strong>
-              <p>Hero, cards, CTA, layout, and interaction code.</p>
+              <strong>Workspace state</strong>
+              <p>Credits, model choice, profile, and settings stay in sync.</p>
             </div>
             <div className="landing-code-lines" aria-label="Generated code sample">
               <span />
@@ -1308,7 +1708,10 @@ function LandingPage({
   );
 }
 
-async function generateFromServer(form: FormState): Promise<DesignSpec> {
+async function generateFromServer(
+  form: FormState,
+  model: string
+): Promise<DesignSpec> {
   if (isStaticExport) {
     throw new Error("Generation is not connected in this preview.");
   }
@@ -1316,7 +1719,7 @@ async function generateFromServer(form: FormState): Promise<DesignSpec> {
   const response = await fetch("/api/generate-design", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(form)
+    body: JSON.stringify({ ...form, model })
   });
   const payload = await response.json();
 
@@ -1327,7 +1730,10 @@ async function generateFromServer(form: FormState): Promise<DesignSpec> {
   return payload.design;
 }
 
-async function generatePrototype(form: FormState): Promise<PrototypeCode> {
+async function generatePrototype(
+  form: FormState,
+  model: string
+): Promise<PrototypeCode> {
   if (isStaticExport) {
     return buildLocalPrototype(form);
   }
@@ -1335,12 +1741,12 @@ async function generatePrototype(form: FormState): Promise<PrototypeCode> {
   const response = await fetch("/api/generate-prototype", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(form)
+    body: JSON.stringify({ ...form, model })
   });
   const payload = await response.json();
 
   if (!response.ok) {
-    return buildLocalPrototype(form);
+    throw new Error(payload.error ?? "Unable to generate prototype code.");
   }
 
   return payload.prototype;
@@ -1349,8 +1755,8 @@ async function generatePrototype(form: FormState): Promise<PrototypeCode> {
 function buildLocalDesignSpec(form: FormState): DesignSpec {
   const mobile = form.platform.toLowerCase().includes("mobile");
   return {
-    ...sampleDesign,
-    title: form.product || sampleDesign.title,
+    ...emptyDesign,
+    title: form.product || emptyDesign.title,
     summary: `${mobile ? "A focused mobile flow" : "A responsive web screen"} for ${form.audience.toLowerCase() || "the target audience"} that helps users ${form.goal.toLowerCase()}.`,
     layoutSections: [
       {
@@ -1528,6 +1934,20 @@ function readUsers(): StoredUser[] {
   }
 }
 
+function readStored<T>(key: string, fallback: T): T {
+  const stored = window.localStorage.getItem(key);
+  if (!stored) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(stored);
+  } catch {
+    window.localStorage.removeItem(key);
+    return fallback;
+  }
+}
+
 function getCookie(name: string) {
   const cookie = document.cookie
     .split("; ")
@@ -1581,6 +2001,40 @@ function SpecGroup({
     <section className="spec-group">
       <h3>{title}</h3>
       {children}
+    </section>
+  );
+}
+
+function ModelPicker({
+  label,
+  models,
+  onSelect,
+  selected
+}: Readonly<{
+  label: string;
+  models: typeof codeModelOptions;
+  onSelect: (model: string) => void;
+  selected: string;
+}>) {
+  return (
+    <section className="model-picker">
+      <h3>{label}</h3>
+      <div>
+        {models.map((model) => (
+          <button
+            className={selected === model.id ? "selected" : ""}
+            key={model.id}
+            onClick={() => onSelect(model.id)}
+            type="button"
+          >
+            <span>
+              <strong>{model.name}</strong>
+              <small>{model.detail}</small>
+            </span>
+            <b>{model.credits} credits</b>
+          </button>
+        ))}
+      </div>
     </section>
   );
 }

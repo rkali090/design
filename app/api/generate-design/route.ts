@@ -12,9 +12,14 @@ type DesignRequest = {
 };
 
 const fallbackPlanModel = "gemini-3.1-pro-preview";
+const allowedModels = new Set(["gemini-3.1-pro-preview"]);
 
 function asText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function asAllowedModel(value: string) {
+  return allowedModels.has(value) ? value : "";
 }
 
 function buildPrompt(input: DesignRequest) {
@@ -138,7 +143,7 @@ export async function POST(request: Request) {
     style: asText(body?.style),
     colors: asText(body?.colors),
     goal: asText(body?.goal),
-    model: asText(body?.model)
+    model: asAllowedModel(asText(body?.model))
   };
 
   if (!input.prompt || !input.product || !input.platform || !input.audience || !input.goal) {
@@ -152,9 +157,9 @@ export async function POST(request: Request) {
     const text = await generateWithVertexExpress({
       apiKey,
       model:
-        process.env.VERTEX_PLAN_MODEL ??
-        process.env.VERTEX_MODEL ??
-        input.model ??
+        input.model ||
+        process.env.VERTEX_PLAN_MODEL ||
+        process.env.VERTEX_MODEL ||
         fallbackPlanModel,
       contents: buildPrompt(input),
       thinkingLevel: "HIGH"

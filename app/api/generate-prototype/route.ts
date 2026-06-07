@@ -4,6 +4,7 @@ type PrototypeRequest = {
   audience: string;
   colors: string;
   goal: string;
+  model?: string;
   platform: string;
   product: string;
   prompt: string;
@@ -11,9 +12,14 @@ type PrototypeRequest = {
 };
 
 const fallbackCodeModel = "gemini-3.1-pro-preview";
+const allowedModels = new Set(["gemini-3.1-pro-preview"]);
 
 function asText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function asAllowedModel(value: string) {
+  return allowedModels.has(value) ? value : "";
 }
 
 function buildPrompt(input: PrototypeRequest) {
@@ -116,6 +122,7 @@ export async function POST(request: Request) {
     audience: asText(body?.audience),
     colors: asText(body?.colors),
     goal: asText(body?.goal),
+    model: asAllowedModel(asText(body?.model)),
     platform: asText(body?.platform),
     product: asText(body?.product),
     prompt: asText(body?.prompt),
@@ -133,8 +140,9 @@ export async function POST(request: Request) {
     const text = await generateWithVertexExpress({
       apiKey,
       model:
-        process.env.VERTEX_CODE_MODEL ??
-        process.env.VERTEX_MODEL ??
+        input.model ||
+        process.env.VERTEX_CODE_MODEL ||
+        process.env.VERTEX_MODEL ||
         fallbackCodeModel,
       contents: buildPrompt(input),
       thinkingLevel: "LOW"
