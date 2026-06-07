@@ -158,6 +158,18 @@ button {
   gap: 14px;
 }
 
+.composer-panel {
+  order: 1;
+}
+
+.simulator-panel {
+  order: 2;
+}
+
+.spec-panel {
+  order: 3;
+}
+
 .composer-panel,
 .simulator-panel,
 .spec-panel {
@@ -653,11 +665,11 @@ fieldset {
 
 @media (max-width: 430px) {
   .app-shell {
-    padding: 10px;
+    padding: 8px;
   }
 
   .topbar {
-    margin-bottom: 14px;
+    margin-bottom: 10px;
   }
 
   .docs-link {
@@ -668,43 +680,202 @@ fieldset {
 
   .brand-mark > span {
     border-radius: 12px;
-    height: 38px;
-    width: 38px;
+    height: 36px;
+    width: 36px;
+  }
+
+  .brand-mark small {
+    display: none;
+  }
+
+  .hero-band {
+    gap: 8px;
+    margin-bottom: 12px;
   }
 
   .hero-band h1 {
-    font-size: 30px;
+    font-size: 27px;
+    line-height: 1.03;
+    margin-top: 5px;
+  }
+
+  .hero-band p {
+    font-size: 13px;
+    max-width: none;
+  }
+
+  .studio-grid {
+    gap: 10px;
   }
 
   .composer-panel,
   .simulator-panel,
   .spec-panel {
-    border-radius: 20px;
-    padding: 12px;
+    border-radius: 18px;
+    padding: 10px;
   }
 
   .prompt-label textarea {
-    border-radius: 20px;
-    font-size: 16px;
-    min-height: 150px;
+    border-radius: 18px;
+    font-size: 15px;
+    min-height: 124px;
+  }
+
+  input,
+  textarea {
+    border-radius: 14px;
+    padding: 11px 12px;
+  }
+
+  .quick-row {
+    margin-bottom: 10px;
+  }
+
+  .quick-row button {
+    min-height: 34px;
+  }
+
+  .field-grid,
+  fieldset {
+    margin-bottom: 10px;
+  }
+
+  .segmented {
+    gap: 6px;
+  }
+
+  .segmented button {
+    border-radius: 13px;
+    min-height: 40px;
+  }
+
+  .key-safety {
+    border-radius: 14px;
+    min-height: 58px;
+    padding: 11px 12px;
+  }
+
+  .helper-copy,
+  .error-message {
+    border-radius: 14px;
+    font-size: 12px;
+    margin-bottom: 10px;
+    padding: 10px;
+  }
+
+  .generate-button {
+    border-radius: 16px;
+    min-height: 50px;
+  }
+
+  .panel-toolbar {
+    margin-bottom: 8px;
   }
 
   .phone-frame {
+    aspect-ratio: auto;
     border-width: 6px;
-    border-radius: 30px;
-    padding: 14px;
+    border-radius: 28px;
+    max-width: 100%;
+    overflow: visible;
+    padding: 12px;
+    width: 100%;
+  }
+
+  .phone-status {
+    margin-bottom: 14px;
+  }
+
+  .preview-hero {
+    gap: 10px;
+  }
+
+  .preview-hero h2 {
+    font-size: 25px;
+  }
+
+  .color-dots {
+    gap: 5px;
+  }
+
+  .color-dots span {
+    height: 15px;
+    width: 15px;
+  }
+
+  .summary {
+    font-size: 13px;
+    margin: 10px 0 12px;
   }
 
   .action-strip {
+    border-radius: 18px;
     grid-template-columns: 1fr;
     min-height: 0;
+    padding: 10px;
+  }
+
+  .action-strip button {
+    border-radius: 14px;
+    min-height: 42px;
   }
 
   .action-strip span {
+    font-size: 12px;
     text-align: left;
   }
 
+  .section-stack {
+    gap: 8px;
+    margin-top: 10px;
+  }
+
   .mobile-section {
-    min-height: 88px;
+    border-radius: 16px;
+    min-height: 0;
+    padding: 11px;
+  }
+
+  .mobile-section h3 {
+    font-size: 14px;
+  }
+
+  .mobile-section p {
+    font-size: 12px;
+  }
+
+  .panel-heading {
+    margin-bottom: 12px;
+  }
+
+  .panel-heading h2 {
+    font-size: 21px;
+  }
+
+  .spec-group {
+    padding: 13px 0;
+  }
+
+  .spec-row {
+    border-radius: 14px;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .hero-band h1 {
+    font-size: 24px;
+  }
+
+  .docs-link {
+    display: none;
+  }
+
+  .segmented {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-hero h2 {
+    font-size: 23px;
   }
 }
