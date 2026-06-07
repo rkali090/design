@@ -185,7 +185,7 @@ const devicePresets: DevicePreset[] = [
 ];
 
 const isStaticExport = process.env.NEXT_PUBLIC_STATIC_EXPORT === "true";
-const authSessionStorageKey = "design-studio-session";
+const authSessionCookieName = "design_studio_session";
 const authUsersStorageKey = "design-studio-users";
 const snapshotsStorageKey = "design-studio-snapshots";
 
@@ -214,7 +214,7 @@ export default function Home() {
 
   useEffect(() => {
     const users = readUsers();
-    const sessionId = window.localStorage.getItem(authSessionStorageKey);
+    const sessionId = getCookie(authSessionCookieName);
     const sessionUser = users.find((user) => user.id === sessionId);
 
     if (sessionUser) {
@@ -310,7 +310,7 @@ export default function Home() {
         return;
       }
 
-      window.localStorage.setItem(authSessionStorageKey, user.id);
+      setSessionCookie(user.id);
       setCurrentUser(user);
       setAuthForm({ email: "", name: "", password: "" });
       return;
@@ -331,13 +331,13 @@ export default function Home() {
 
     const nextUsers = [user, ...users];
     window.localStorage.setItem(authUsersStorageKey, JSON.stringify(nextUsers));
-    window.localStorage.setItem(authSessionStorageKey, user.id);
+    setSessionCookie(user.id);
     setCurrentUser(user);
     setAuthForm({ email: "", name: "", password: "" });
   }
 
   function signOut() {
-    window.localStorage.removeItem(authSessionStorageKey);
+    clearSessionCookie();
     setCurrentUser(null);
     setActivePanel("compose");
   }
@@ -456,7 +456,7 @@ export default function Home() {
           </button>
 
           <p className="auth-note">
-            This is prototype auth for GitHub Pages. Accounts stay in this browser.
+            Prototype auth: session uses a browser cookie; accounts stay in this browser.
           </p>
         </section>
       </main>
@@ -839,6 +839,22 @@ function readUsers(): StoredUser[] {
     window.localStorage.removeItem(authUsersStorageKey);
     return [];
   }
+}
+
+function getCookie(name: string) {
+  const cookie = document.cookie
+    .split("; ")
+    .find((part) => part.startsWith(`${name}=`));
+  return cookie ? decodeURIComponent(cookie.split("=").slice(1).join("=")) : "";
+}
+
+function setSessionCookie(userId: string) {
+  const maxAge = 60 * 60 * 24 * 14;
+  document.cookie = `${authSessionCookieName}=${encodeURIComponent(userId)}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;
+}
+
+function clearSessionCookie() {
+  document.cookie = `${authSessionCookieName}=; Max-Age=0; Path=/; SameSite=Lax`;
 }
 
 async function hashPassword(password: string) {
