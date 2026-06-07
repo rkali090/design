@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type PaletteColor = {
   name: string;
@@ -48,6 +48,19 @@ type FormState = {
   colors: string;
   goal: string;
   model: string;
+};
+
+type PanelTab = "compose" | "preview" | "handoff";
+
+type DevicePreset = {
+  name: string;
+  width: number;
+};
+
+type SavedSnapshot = {
+  createdAt: string;
+  design: DesignSpec;
+  id: string;
 };
 
 const sampleDesign: DesignSpec = {
@@ -148,18 +161,57 @@ const quickPrompts = [
   "Fitness habit tracker for beginners"
 ];
 
+const devicePresets: DevicePreset[] = [
+  { name: "SE", width: 320 },
+  { name: "iPhone", width: 390 },
+  { name: "Pixel", width: 412 },
+  { name: "Fold", width: 520 }
+];
+
 const isStaticExport = process.env.NEXT_PUBLIC_STATIC_EXPORT === "true";
+const snapshotsStorageKey = "design-studio-snapshots";
 
 export default function Home() {
+  const [activePanel, setActivePanel] = useState<PanelTab>("compose");
   const [form, setForm] = useState<FormState>(initialForm);
   const [design, setDesign] = useState<DesignSpec>(sampleDesign);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedDevice, setSelectedDevice] = useState(devicePresets[1]);
+  const [snapshotsReady, setSnapshotsReady] = useState(false);
+  const [savedSnapshots, setSavedSnapshots] = useState<SavedSnapshot[]>([]);
 
   const dominantColors = useMemo(
     () => design.palette.slice(0, 5),
     [design.palette]
   );
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(snapshotsStorageKey);
+    if (!stored) {
+      setSnapshotsReady(true);
+      return;
+    }
+
+    try {
+      setSavedSnapshots(JSON.parse(stored));
+    } catch {
+      window.localStorage.removeItem(snapshotsStorageKey);
+    } finally {
+      setSnapshotsReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!snapshotsReady) {
+      return;
+    }
+
+    window.localStorage.setItem(
+      snapshotsStorageKey,
+      JSON.stringify(savedSnapshots)
+    );
+  }, [savedSnapshots, snapshotsReady]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -169,6 +221,7 @@ export default function Home() {
     try {
       const payload = await generateFromServer(form);
       setDesign(payload);
+      setActivePanel("preview");
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -186,6 +239,42 @@ export default function Home() {
 
   function applyQuickPrompt(prompt: string) {
     updateField("prompt", `Create a mobile-first ${prompt.toLowerCase()} with a Lovable-style builder experience and an implementation-ready handoff.`);
+  }
+
+  async function copyHandoff() {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(design, null, 2));
+      setError("");
+    } catch {
+      setError("Unable to copy handoff JSON from this browser.");
+    }
+  }
+
+  function downloadHandoff() {
+    const blob = new Blob([JSON.stringify(design, null, 2)], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${design.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "design"}-handoff.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function saveSnapshot() {
+    const snapshot: SavedSnapshot = {
+      createdAt: new Date().toISOString(),
+      design,
+      id: crypto.randomUUID()
+    };
+
+    setSavedSnapshots((current) => [snapshot, ...current].slice(0, 6));
+  }
+
+  function restoreSnapshot(snapshot: SavedSnapshot) {
+    setDesign(snapshot.design);
+    setActivePanel("preview");
   }
 
   return (
@@ -213,8 +302,35 @@ export default function Home() {
         </p>
       </section>
 
+      <nav className="mobile-tabs" aria-label="Workspace panels">
+        <button
+          className={activePanel === "compose" ? "selected" : ""}
+          onClick={() => setActivePanel("compose")}
+          type="button"
+        >
+          Brief
+        </button>
+        <button
+          className={activePanel === "preview" ? "selected" : ""}
+          onClick={() => setActivePanel("preview")}
+          type="button"
+        >
+          Preview
+        </button>
+        <button
+          className={activePanel === "handoff" ? "selected" : ""}
+          onClick={() => setActivePanel("handoff")}
+          type="button"
+        >
+          Handoff
+        </button>
+      </nav>
+
       <section className="studio-grid">
-        <form className="composer-panel" onSubmit={onSubmit}>
+        <form
+          className={`composer-panel ${activePanel === "compose" ? "is-active" : ""}`}
+          onSubmit={onSubmit}
+        >
           <label className="prompt-label">
             Design prompt
             <textarea
@@ -320,18 +436,46 @@ export default function Home() {
 
           {error ? <p className="error-message">{error}</p> : null}
 
+          <div className="utility-row">
+            <button onClick={() => setForm(initialForm)} type="button">
+              Reset brief
+            </button>
+            <button onClick={saveSnapshot} type="button">
+              Save snapshot
+            </button>
+          </div>
+
           <button className="generate-button" disabled={loading} type="submit">
             {loading ? "Generating..." : "Ask Vertex to design"}
           </button>
         </form>
 
-        <section className="simulator-panel" aria-label="Mobile simulator">
+        <section
+          className={`simulator-panel ${activePanel === "preview" ? "is-active" : ""}`}
+          aria-label="Mobile simulator"
+        >
           <div className="panel-toolbar">
             <span>Mobile simulator</span>
             <span>{form.platform}</span>
           </div>
 
-          <div className="phone-frame">
+          <div className="device-switcher" aria-label="Device presets">
+            {devicePresets.map((device) => (
+              <button
+                className={selectedDevice.name === device.name ? "selected" : ""}
+                key={device.name}
+                onClick={() => setSelectedDevice(device)}
+                type="button"
+              >
+                {device.name}
+              </button>
+            ))}
+          </div>
+
+          <div
+            className="phone-frame"
+            style={{ maxWidth: `${selectedDevice.width}px` }}
+          >
             <div className="phone-status">
               <span>9:41</span>
               <span>AI Preview</span>
@@ -374,10 +518,25 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="spec-panel" aria-label="Generated design specification">
+        <section
+          className={`spec-panel ${activePanel === "handoff" ? "is-active" : ""}`}
+          aria-label="Generated design specification"
+        >
           <div className="panel-heading">
             <span className="eyebrow">Handoff</span>
             <h2>{design.title}</h2>
+          </div>
+
+          <div className="handoff-actions">
+            <button onClick={copyHandoff} type="button">
+              Copy JSON
+            </button>
+            <button onClick={downloadHandoff} type="button">
+              Download
+            </button>
+            <button onClick={saveSnapshot} type="button">
+              Save
+            </button>
           </div>
 
           <SpecGroup title="Palette">
@@ -426,6 +585,30 @@ export default function Home() {
             {design.implementationNotes.map((note) => (
               <p className="note" key={note}>{note}</p>
             ))}
+          </SpecGroup>
+
+          <SpecGroup title="Snapshots">
+            {savedSnapshots.length ? (
+              <div className="snapshot-list">
+                {savedSnapshots.map((snapshot) => (
+                  <button
+                    key={snapshot.id}
+                    onClick={() => restoreSnapshot(snapshot)}
+                    type="button"
+                  >
+                    <strong>{snapshot.design.title}</strong>
+                    <span>
+                      {new Date(snapshot.createdAt).toLocaleString([], {
+                        dateStyle: "medium",
+                        timeStyle: "short"
+                      })}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="note">Save a snapshot to compare directions later.</p>
+            )}
           </SpecGroup>
         </section>
       </section>

@@ -160,6 +160,10 @@ button {
   gap: 14px;
 }
 
+.mobile-tabs {
+  display: none;
+}
+
 .composer-panel {
   order: 1;
 }
@@ -310,6 +314,52 @@ fieldset {
 }
 
 .segmented .selected {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: white;
+}
+
+.device-switcher,
+.handoff-actions,
+.utility-row {
+  display: grid;
+  gap: 8px;
+}
+
+.device-switcher {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 12px;
+  width: min(100%, 380px);
+}
+
+.handoff-actions,
+.utility-row {
+  margin-bottom: 12px;
+}
+
+.handoff-actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.utility-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.device-switcher button,
+.handoff-actions button,
+.utility-row button,
+.snapshot-list button {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  min-height: 38px;
+  padding: 0 10px;
+}
+
+.device-switcher .selected {
   background: var(--ink);
   border-color: var(--ink);
   color: white;
@@ -604,6 +654,32 @@ fieldset {
   padding: 8px 10px;
 }
 
+.snapshot-list {
+  display: grid;
+  gap: 8px;
+}
+
+.snapshot-list button {
+  align-items: start;
+  display: grid;
+  justify-items: start;
+  min-height: 0;
+  padding: 10px;
+  text-align: left;
+}
+
+.snapshot-list strong {
+  color: var(--ink);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.snapshot-list span {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
 @media (min-width: 760px) {
   .app-shell {
     padding: 22px;
@@ -774,6 +850,47 @@ fieldset {
     gap: 12px;
   }
 
+  .mobile-tabs {
+    background: rgba(255, 250, 242, 0.92);
+    border: 1px solid rgba(17, 18, 20, 0.1);
+    border-radius: 16px;
+    display: grid;
+    gap: 6px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0 auto 10px;
+    max-width: 1240px;
+    padding: 6px;
+  }
+
+  .mobile-tabs button {
+    background: transparent;
+    border: 0;
+    border-radius: 12px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 900;
+    min-height: 38px;
+  }
+
+  .mobile-tabs .selected {
+    background: var(--ink);
+    color: white;
+  }
+
+  .studio-grid > .composer-panel,
+  .studio-grid > .simulator-panel,
+  .studio-grid > .spec-panel {
+    display: none;
+  }
+
+  .studio-grid > .is-active {
+    display: grid;
+  }
+
+  .studio-grid > form.is-active {
+    display: block;
+  }
+
   .composer-panel,
   .simulator-panel,
   .spec-panel {
@@ -813,6 +930,26 @@ fieldset {
   .segmented button {
     border-radius: 13px;
     min-height: 40px;
+  }
+
+  .device-switcher {
+    gap: 6px;
+    margin-bottom: 10px;
+    width: 100%;
+  }
+
+  .device-switcher button,
+  .handoff-actions button,
+  .utility-row button {
+    border-radius: 12px;
+    min-height: 34px;
+    padding: 0 8px;
+  }
+
+  .handoff-actions,
+  .utility-row {
+    gap: 6px;
+    margin-bottom: 10px;
   }
 
   .key-safety {
