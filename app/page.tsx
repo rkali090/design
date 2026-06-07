@@ -152,8 +152,8 @@ const sampleDesign: DesignSpec = {
   ],
   microcopy: ["Ask Vertex to design", "Mobile preview", "Ready for handoff"],
   implementationNotes: [
-    "Use the server route for private keys on real deployments.",
-    "GitHub Pages stays a static preview and never accepts API keys.",
+    "Keep the first screen focused on the user's primary action.",
+    "Use stable spacing so generated content never shifts the layout abruptly.",
     "Keep simulator cards fixed-height enough to avoid shifting while content changes."
   ]
 };
@@ -347,7 +347,7 @@ export default function Home() {
       await navigator.clipboard.writeText(JSON.stringify(design, null, 2));
       setError("");
     } catch {
-      setError("Unable to copy handoff JSON from this browser.");
+      setError("Unable to copy handoff JSON right now.");
     }
   }
 
@@ -396,7 +396,7 @@ export default function Home() {
           <div className="auth-heading">
             <span className="eyebrow">Design studio</span>
             <h1>{authMode === "signin" ? "Sign in" : "Create account"}</h1>
-            <p>Prototype access for the mobile-first Vertex design builder.</p>
+            <p>Access your mobile-first design workspace.</p>
           </div>
 
           <form onSubmit={onAuthSubmit}>
@@ -456,7 +456,7 @@ export default function Home() {
           </button>
 
           <p className="auth-note">
-            Prototype auth: session uses a browser cookie; accounts stay in this browser.
+            Your workspace stays signed in on this device.
           </p>
         </section>
       </main>
@@ -611,18 +611,18 @@ export default function Home() {
             </label>
 
             <div className="key-safety">
-              <strong>Key safety</strong>
-              <span>Server-only `.env.local`</span>
+              <strong>Access</strong>
+              <span>Signed-in workspace</span>
             </div>
           </div>
 
           {isStaticExport ? (
             <p className="helper-copy">
-              GitHub Pages is a safe static preview. Live Vertex generation needs a server deploy with `.env.local`.
+              Preview mode is active. Explore the interface, simulator, and handoff tools.
             </p>
           ) : (
             <p className="helper-copy">
-              Vertex runs through the secure server route and reads `VERTEX_API_KEY` from `.env.local`.
+              Secure generation is ready for this workspace.
             </p>
           )}
 
@@ -810,7 +810,7 @@ export default function Home() {
 
 async function generateFromServer(form: FormState): Promise<DesignSpec> {
   if (isStaticExport) {
-    throw new Error("Live generation is disabled on GitHub Pages. Deploy the Next.js server with `.env.local` to enable Vertex.");
+    throw new Error("Generation is not connected in this preview.");
   }
 
   const response = await fetch("/api/generate-design", {
