@@ -48,7 +48,6 @@ type FormState = {
   colors: string;
   goal: string;
   model: string;
-  vertexKey: string;
 };
 
 const sampleDesign: DesignSpec = {
@@ -139,8 +138,7 @@ const initialForm: FormState = {
   style: "Lovable-inspired, premium, tactile, modern",
   colors: "Graphite, porcelain, signal green, electric blue, coral",
   goal: "Generate a practical mobile design spec with a realistic phone preview",
-  model: "gemini-2.5-flash",
-  vertexKey: ""
+  model: "gemini-2.5-flash"
 };
 
 const platforms = ["Mobile app", "Landing page", "Dashboard", "Storefront"];
@@ -169,10 +167,7 @@ export default function Home() {
     setError("");
 
     try {
-      const payload = form.vertexKey
-        ? await generateFromBrowserKey(form)
-        : await generateFromServer(form);
-
+      const payload = await generateFromServer(form);
       setDesign(payload);
     } catch (requestError) {
       setError(
@@ -307,26 +302,19 @@ export default function Home() {
               />
             </label>
 
-            <label>
-              Vertex API key
-              <input
-                autoComplete="off"
-                inputMode="text"
-                type="password"
-                value={form.vertexKey}
-                onChange={(event) => updateField("vertexKey", event.target.value)}
-                placeholder={isStaticExport ? "Required on GitHub Pages" : "Optional locally"}
-              />
-            </label>
+            <div className="key-safety">
+              <strong>Key safety</strong>
+              <span>Server-only `.env.local`</span>
+            </div>
           </div>
 
           {isStaticExport ? (
             <p className="helper-copy">
-              GitHub Pages is static, so the key field is used only in your browser session.
+              GitHub Pages is a safe static preview. Live Vertex generation needs a server deploy with `.env.local`.
             </p>
           ) : (
             <p className="helper-copy">
-              Leave the key field empty to use the secure server route from `.env.local`.
+              Vertex runs through the secure server route and reads `VERTEX_API_KEY` from `.env.local`.
             </p>
           )}
 
@@ -462,92 +450,6 @@ async function generateFromServer(form: FormState): Promise<DesignSpec> {
   }
 
   return payload.design;
-}
-
-async function generateFromBrowserKey(form: FormState): Promise<DesignSpec> {
-  const prompt = buildPrompt(form);
-  const endpoint = `https://aiplatform.googleapis.com/v1beta1/publishers/google/models/${encodeURIComponent(form.model)}:generateContent?key=${encodeURIComponent(form.vertexKey)}`;
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }]
-        }
-      ],
-      generationConfig: {
-        responseMimeType: "application/json"
-      }
-    })
-  });
-  const payload = await response.json();
-
-  if (!response.ok) {
-    throw new Error(payload.error?.message ?? "Vertex generation failed.");
-  }
-
-  const text = payload.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    throw new Error("Vertex returned an empty response.");
-  }
-
-  return parseJson(text);
-}
-
-function buildPrompt(input: FormState) {
-  return `
-You are a senior product designer creating implementation-ready mobile-first UI directions.
-
-User prompt:
-${input.prompt}
-
-Context:
-- Product: ${input.product}
-- Platform: ${input.platform}
-- Audience: ${input.audience}
-- Visual style: ${input.style}
-- Brand colors or constraints: ${input.colors || "choose a balanced palette"}
-- Primary user goal: ${input.goal}
-
-Return only valid JSON with this exact shape:
-{
-  "title": "short product screen title",
-  "summary": "one sentence design direction",
-  "palette": [
-    { "name": "Ink", "hex": "#111111", "usage": "text and strong contrast" }
-  ],
-  "typeScale": [
-    { "role": "Screen title", "size": "28", "weight": "700", "usage": "top-level mobile headings" }
-  ],
-  "layoutSections": [
-    {
-      "name": "Section name",
-      "purpose": "why it exists",
-      "mobileTreatment": "how it behaves on small screens",
-      "keyElements": ["element one", "element two"]
-    }
-  ],
-  "components": [
-    {
-      "name": "Component name",
-      "behavior": "interaction behavior",
-      "states": ["default", "pressed", "loading"]
-    }
-  ],
-  "microcopy": ["short label or message"],
-  "implementationNotes": ["specific UI engineering note"]
-}
-
-Make it feel like a polished Lovable-style app builder result. Keep it practical for a real mobile product.
-`.trim();
-}
-
-function parseJson(text: string) {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  const jsonText = fenced?.[1] ?? text;
-  return JSON.parse(jsonText);
 }
 
 function SpecGroup({

@@ -32,4 +32,4 @@ This app can be exported for GitHub Pages under `/design`:
 GITHUB_PAGES=true pnpm build
 ```
 
-GitHub Pages is static hosting, so it cannot run the server-only API route. The deployed `/design` version includes an optional Vertex API key field for browser-only testing. For private keys in production, deploy the Next.js app to a server platform and use `.env.local`.
+GitHub Pages is static hosting, so it cannot run the server-only API route. The deployed `/design` version is a safe preview only and does not accept or expose API keys. For live generation, deploy the Next.js app to a server platform and use `.env.local`.
