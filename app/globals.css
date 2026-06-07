@@ -60,6 +60,7 @@ button {
 .topbar {
   align-items: center;
   display: flex;
+  gap: 12px;
   justify-content: space-between;
   margin-bottom: 18px;
 }
@@ -122,6 +123,105 @@ button {
   justify-content: center;
   padding: 0 14px;
   text-decoration: none;
+}
+
+.topbar-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.user-pill,
+.sign-out-button {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 850;
+  height: 40px;
+  justify-content: center;
+  padding: 0 14px;
+}
+
+.user-pill {
+  background: #edf8f0;
+  border: 1px solid rgba(34, 197, 94, 0.16);
+  color: #167144;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sign-out-button {
+  background: white;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.auth-shell {
+  align-items: center;
+  display: grid;
+  min-height: 100vh;
+  padding: 18px;
+}
+
+.auth-card {
+  background: rgba(255, 250, 242, 0.94);
+  border: 1px solid rgba(17, 18, 20, 0.1);
+  border-radius: 30px;
+  box-shadow: var(--shadow);
+  margin: 0 auto;
+  max-width: 460px;
+  padding: 22px;
+  width: 100%;
+}
+
+.auth-heading {
+  margin-bottom: 18px;
+}
+
+.auth-heading h1,
+.auth-card h1 {
+  font-size: clamp(32px, 10vw, 48px);
+  letter-spacing: 0;
+  line-height: 0.98;
+  margin: 7px 0 0;
+}
+
+.auth-heading p,
+.auth-note {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.auth-heading p {
+  margin: 10px 0 0;
+}
+
+.auth-card form {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-switch {
+  background: transparent;
+  border: 0;
+  color: #167144;
+  font-weight: 900;
+  margin-top: 14px;
+  min-height: 40px;
+  padding: 0;
+  width: 100%;
+}
+
+.auth-note {
+  background: #eef7f1;
+  border: 1px solid rgba(34, 197, 94, 0.16);
+  border-radius: 16px;
+  margin: 12px 0 0;
+  padding: 12px;
 }
 
 .hero-band {
@@ -815,10 +915,26 @@ fieldset {
     margin-bottom: 12px;
   }
 
+  .topbar-actions {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: repeat(3, minmax(0, auto));
+    width: 100%;
+  }
+
+  .user-pill,
+  .sign-out-button,
+  .docs-link {
+    height: 36px;
+    padding: 0 10px;
+  }
+
+  .user-pill {
+    max-width: none;
+  }
+
   .docs-link {
     font-size: 12px;
-    height: 36px;
-    padding: 0 11px;
   }
 
   .brand-mark > span {
@@ -1099,6 +1215,20 @@ fieldset {
 
   .brand-mark strong {
     font-size: 15px;
+  }
+
+  .auth-shell {
+    padding: 10px;
+  }
+
+  .auth-card {
+    border-radius: 22px;
+    padding: 16px;
+  }
+
+  .auth-heading h1,
+  .auth-card h1 {
+    font-size: 30px;
   }
 
   .quick-row button {

@@ -63,6 +63,22 @@ type SavedSnapshot = {
   id: string;
 };
 
+type StoredUser = {
+  createdAt: string;
+  email: string;
+  id: string;
+  name: string;
+  passwordHash: string;
+};
+
+type AuthForm = {
+  email: string;
+  name: string;
+  password: string;
+};
+
+type AuthMode = "signin" | "signup";
+
 const sampleDesign: DesignSpec = {
   title: "VisionOS Frames",
   summary:
@@ -169,10 +185,20 @@ const devicePresets: DevicePreset[] = [
 ];
 
 const isStaticExport = process.env.NEXT_PUBLIC_STATIC_EXPORT === "true";
+const authSessionStorageKey = "design-studio-session";
+const authUsersStorageKey = "design-studio-users";
 const snapshotsStorageKey = "design-studio-snapshots";
 
 export default function Home() {
   const [activePanel, setActivePanel] = useState<PanelTab>("compose");
+  const [authForm, setAuthForm] = useState<AuthForm>({
+    email: "",
+    name: "",
+    password: ""
+  });
+  const [authMode, setAuthMode] = useState<AuthMode>("signin");
+  const [authReady, setAuthReady] = useState(false);
+  const [currentUser, setCurrentUser] = useState<StoredUser | null>(null);
   const [form, setForm] = useState<FormState>(initialForm);
   const [design, setDesign] = useState<DesignSpec>(sampleDesign);
   const [loading, setLoading] = useState(false);
@@ -185,6 +211,18 @@ export default function Home() {
     () => design.palette.slice(0, 5),
     [design.palette]
   );
+
+  useEffect(() => {
+    const users = readUsers();
+    const sessionId = window.localStorage.getItem(authSessionStorageKey);
+    const sessionUser = users.find((user) => user.id === sessionId);
+
+    if (sessionUser) {
+      setCurrentUser(sessionUser);
+    }
+
+    setAuthReady(true);
+  }, []);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(snapshotsStorageKey);
@@ -237,8 +275,71 @@ export default function Home() {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  function updateAuthField(field: keyof AuthForm, value: string) {
+    setAuthForm((current) => ({ ...current, [field]: value }));
+  }
+
   function applyQuickPrompt(prompt: string) {
     updateField("prompt", `Create a mobile-first ${prompt.toLowerCase()} with a Lovable-style builder experience and an implementation-ready handoff.`);
+  }
+
+  async function onAuthSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+
+    const email = authForm.email.trim().toLowerCase();
+    const name = authForm.name.trim();
+    const password = authForm.password;
+
+    if (!email || !password || (authMode === "signup" && !name)) {
+      setError("Fill in the required auth fields.");
+      return;
+    }
+
+    const users = readUsers();
+    const passwordHash = await hashPassword(password);
+
+    if (authMode === "signin") {
+      const user = users.find(
+        (candidate) =>
+          candidate.email === email && candidate.passwordHash === passwordHash
+      );
+
+      if (!user) {
+        setError("No matching account found.");
+        return;
+      }
+
+      window.localStorage.setItem(authSessionStorageKey, user.id);
+      setCurrentUser(user);
+      setAuthForm({ email: "", name: "", password: "" });
+      return;
+    }
+
+    if (users.some((user) => user.email === email)) {
+      setError("An account already exists for that email.");
+      return;
+    }
+
+    const user: StoredUser = {
+      createdAt: new Date().toISOString(),
+      email,
+      id: crypto.randomUUID(),
+      name,
+      passwordHash
+    };
+
+    const nextUsers = [user, ...users];
+    window.localStorage.setItem(authUsersStorageKey, JSON.stringify(nextUsers));
+    window.localStorage.setItem(authSessionStorageKey, user.id);
+    setCurrentUser(user);
+    setAuthForm({ email: "", name: "", password: "" });
+  }
+
+  function signOut() {
+    window.localStorage.removeItem(authSessionStorageKey);
+    setCurrentUser(null);
+    setActivePanel("compose");
   }
 
   async function copyHandoff() {
@@ -277,6 +378,91 @@ export default function Home() {
     setActivePanel("preview");
   }
 
+  if (!authReady) {
+    return (
+      <main className="auth-shell">
+        <section className="auth-card">
+          <span className="eyebrow">Design studio</span>
+          <h1>Loading workspace</h1>
+        </section>
+      </main>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <main className="auth-shell">
+        <section className="auth-card">
+          <div className="auth-heading">
+            <span className="eyebrow">Design studio</span>
+            <h1>{authMode === "signin" ? "Sign in" : "Create account"}</h1>
+            <p>Prototype access for the mobile-first Vertex design builder.</p>
+          </div>
+
+          <form onSubmit={onAuthSubmit}>
+            {authMode === "signup" ? (
+              <label>
+                Name
+                <input
+                  autoComplete="name"
+                  value={authForm.name}
+                  onChange={(event) => updateAuthField("name", event.target.value)}
+                  placeholder="Your name"
+                />
+              </label>
+            ) : null}
+
+            <label>
+              Email
+              <input
+                autoComplete="email"
+                inputMode="email"
+                value={authForm.email}
+                onChange={(event) => updateAuthField("email", event.target.value)}
+                placeholder="you@example.com"
+                type="email"
+              />
+            </label>
+
+            <label>
+              Password
+              <input
+                autoComplete={authMode === "signin" ? "current-password" : "new-password"}
+                value={authForm.password}
+                onChange={(event) => updateAuthField("password", event.target.value)}
+                placeholder="Password"
+                type="password"
+              />
+            </label>
+
+            {error ? <p className="error-message">{error}</p> : null}
+
+            <button className="generate-button" type="submit">
+              {authMode === "signin" ? "Sign in" : "Create account"}
+            </button>
+          </form>
+
+          <button
+            className="auth-switch"
+            onClick={() => {
+              setAuthMode(authMode === "signin" ? "signup" : "signin");
+              setError("");
+            }}
+            type="button"
+          >
+            {authMode === "signin"
+              ? "Need an account? Create one"
+              : "Already have an account? Sign in"}
+          </button>
+
+          <p className="auth-note">
+            This is prototype auth for GitHub Pages. Accounts stay in this browser.
+          </p>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="app-shell">
       <nav className="topbar" aria-label="Primary">
@@ -287,9 +473,15 @@ export default function Home() {
             <small>Vertex mobile studio</small>
           </div>
         </div>
-        <a className="docs-link" href="https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview">
-          Vertex docs
-        </a>
+        <div className="topbar-actions">
+          <span className="user-pill">{currentUser.name}</span>
+          <button className="sign-out-button" onClick={signOut} type="button">
+            Sign out
+          </button>
+          <a className="docs-link" href="https://cloud.google.com/vertex-ai/generative-ai/docs/start/express-mode/overview">
+            Vertex docs
+          </a>
+        </div>
       </nav>
 
       <section className="hero-band">
@@ -633,6 +825,28 @@ async function generateFromServer(form: FormState): Promise<DesignSpec> {
   }
 
   return payload.design;
+}
+
+function readUsers(): StoredUser[] {
+  const stored = window.localStorage.getItem(authUsersStorageKey);
+  if (!stored) {
+    return [];
+  }
+
+  try {
+    return JSON.parse(stored);
+  } catch {
+    window.localStorage.removeItem(authUsersStorageKey);
+    return [];
+  }
+}
+
+async function hashPassword(password: string) {
+  const bytes = new TextEncoder().encode(password);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 function SpecGroup({
