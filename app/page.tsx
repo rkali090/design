@@ -50,7 +50,7 @@ type FormState = {
   model: string;
 };
 
-type PanelTab = "compose" | "preview" | "handoff";
+type PanelTab = "compose" | "preview" | "code" | "handoff";
 
 type DevicePreset = {
   name: string;
@@ -61,6 +61,13 @@ type SavedSnapshot = {
   createdAt: string;
   design: DesignSpec;
   id: string;
+};
+
+type PrototypeCode = {
+  css: string;
+  html: string;
+  js: string;
+  title: string;
 };
 
 type StoredUser = {
@@ -158,6 +165,108 @@ const sampleDesign: DesignSpec = {
   ]
 };
 
+const samplePrototype: PrototypeCode = {
+  title: "VisionOS Frames",
+  html: `
+<main class="prototype-app">
+  <section class="hero">
+    <p class="label">AI frame finder</p>
+    <h1>Find frames that feel made for you.</h1>
+    <p>Compare fit, color, and lens options in a guided mobile shopping flow.</p>
+    <button data-action="start">Start fitting</button>
+  </section>
+  <section class="cards">
+    <article>
+      <span>01</span>
+      <strong>Face shape scan</strong>
+      <p>Ask three quick style questions before showing recommendations.</p>
+    </article>
+    <article>
+      <span>02</span>
+      <strong>Frame shortlist</strong>
+      <p>Save, compare, and narrow picks with clear fit confidence.</p>
+    </article>
+    <article>
+      <span>03</span>
+      <strong>Checkout assist</strong>
+      <p>Keep prescription and lens choices visible before purchase.</p>
+    </article>
+  </section>
+</main>`.trim(),
+  css: `
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #f8f1e5;
+  color: #171717;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+.prototype-app {
+  min-height: 100vh;
+  padding: 18px;
+}
+.hero {
+  background: #171717;
+  border-radius: 28px;
+  color: white;
+  padding: 24px;
+}
+.label {
+  color: #22c55e;
+  font-size: 12px;
+  font-weight: 900;
+  margin: 0 0 10px;
+  text-transform: uppercase;
+}
+h1 {
+  font-size: 34px;
+  line-height: 1;
+  margin: 0;
+}
+.hero p:last-of-type {
+  color: rgba(255,255,255,.72);
+  line-height: 1.5;
+}
+button {
+  background: #22c55e;
+  border: 0;
+  border-radius: 16px;
+  color: #171717;
+  font-weight: 900;
+  min-height: 48px;
+  padding: 0 18px;
+}
+.cards {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+article {
+  background: white;
+  border: 1px solid rgba(23,23,23,.08);
+  border-radius: 22px;
+  padding: 16px;
+}
+article span {
+  color: #3b82f6;
+  font-size: 12px;
+  font-weight: 900;
+}
+article strong {
+  display: block;
+  margin-top: 8px;
+}
+article p {
+  color: #6c665f;
+  line-height: 1.45;
+  margin-bottom: 0;
+}`.trim(),
+  js: `
+document.querySelector('[data-action="start"]')?.addEventListener('click', () => {
+  document.body.classList.toggle('started');
+});`.trim()
+};
+
 const initialForm: FormState = {
   prompt:
     "Create a premium mobile app screen for a glasses store that helps shoppers compare frames, preview fit, and checkout quickly.",
@@ -201,6 +310,8 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState<StoredUser | null>(null);
   const [form, setForm] = useState<FormState>(initialForm);
   const [design, setDesign] = useState<DesignSpec>(sampleDesign);
+  const [generatedPrototype, setGeneratedPrototype] =
+    useState<PrototypeCode>(samplePrototype);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedDevice, setSelectedDevice] = useState(devicePresets[1]);
@@ -257,9 +368,21 @@ export default function Home() {
     setError("");
 
     try {
-      const payload = await generateFromServer(form);
-      setDesign(payload);
-      setActivePanel("preview");
+      const prototype = await generatePrototype(form);
+      setGeneratedPrototype(prototype);
+
+      if (!isStaticExport) {
+        try {
+          const payload = await generateFromServer(form);
+          setDesign(payload);
+        } catch {
+          setDesign(buildLocalDesignSpec(form));
+        }
+      } else {
+        setDesign(buildLocalDesignSpec(form));
+      }
+
+      setActivePanel("code");
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -376,6 +499,27 @@ export default function Home() {
   function restoreSnapshot(snapshot: SavedSnapshot) {
     setDesign(snapshot.design);
     setActivePanel("preview");
+  }
+
+  async function copyPrototypeCode() {
+    try {
+      await navigator.clipboard.writeText(composePrototypeDocument(generatedPrototype));
+      setError("");
+    } catch {
+      setError("Unable to copy prototype code right now.");
+    }
+  }
+
+  function downloadPrototypeCode() {
+    const blob = new Blob([composePrototypeDocument(generatedPrototype)], {
+      type: "text/html"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${generatedPrototype.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "prototype"}.html`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   if (!authReady) {
@@ -510,6 +654,13 @@ export default function Home() {
           Preview
         </button>
         <button
+          className={activePanel === "code" ? "selected" : ""}
+          onClick={() => setActivePanel("code")}
+          type="button"
+        >
+          Code
+        </button>
+        <button
           className={activePanel === "handoff" ? "selected" : ""}
           onClick={() => setActivePanel("handoff")}
           type="button"
@@ -638,7 +789,7 @@ export default function Home() {
           </div>
 
           <button className="generate-button" disabled={loading} type="submit">
-            {loading ? "Generating..." : "Ask Vertex to design"}
+            {loading ? "Generating..." : "Generate prototype"}
           </button>
         </form>
 
@@ -707,6 +858,44 @@ export default function Home() {
                 </article>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section
+          className={`code-panel ${activePanel === "code" ? "is-active" : ""}`}
+          aria-label="Generated prototype"
+        >
+          <div className="panel-heading">
+            <span className="eyebrow">Rendered prototype</span>
+            <h2>{generatedPrototype.title}</h2>
+          </div>
+
+          <div className="prototype-actions">
+            <button onClick={copyPrototypeCode} type="button">
+              Copy HTML
+            </button>
+            <button onClick={downloadPrototypeCode} type="button">
+              Download
+            </button>
+            <button onClick={() => setActivePanel("preview")} type="button">
+              Design spec
+            </button>
+          </div>
+
+          <div
+            className={`prototype-render ${form.platform.toLowerCase().includes("mobile") ? "mobile-frame" : "web-frame"}`}
+          >
+            <iframe
+              sandbox="allow-scripts"
+              srcDoc={composePrototypeDocument(generatedPrototype)}
+              title={`${generatedPrototype.title} rendered prototype`}
+            />
+          </div>
+
+          <div className="code-grid">
+            <CodeBlock label="HTML" value={generatedPrototype.html} />
+            <CodeBlock label="CSS" value={generatedPrototype.css} />
+            <CodeBlock label="JS" value={generatedPrototype.js || "// No interactions yet"} />
           </div>
         </section>
 
@@ -827,6 +1016,193 @@ async function generateFromServer(form: FormState): Promise<DesignSpec> {
   return payload.design;
 }
 
+async function generatePrototype(form: FormState): Promise<PrototypeCode> {
+  if (isStaticExport) {
+    return buildLocalPrototype(form);
+  }
+
+  const response = await fetch("/api/generate-prototype", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(form)
+  });
+  const payload = await response.json();
+
+  if (!response.ok) {
+    return buildLocalPrototype(form);
+  }
+
+  return payload.prototype;
+}
+
+function buildLocalDesignSpec(form: FormState): DesignSpec {
+  const mobile = form.platform.toLowerCase().includes("mobile");
+  return {
+    ...sampleDesign,
+    title: form.product || sampleDesign.title,
+    summary: `${mobile ? "A focused mobile flow" : "A responsive web screen"} for ${form.audience.toLowerCase() || "the target audience"} that helps users ${form.goal.toLowerCase()}.`,
+    layoutSections: [
+      {
+        name: "Prompt",
+        purpose: "Capture the product direction quickly.",
+        mobileTreatment: "Keep the prompt visible and easy to revise.",
+        keyElements: ["Prompt", "Output type", "Generate action"]
+      },
+      {
+        name: mobile ? "Mobile Frame" : "Web Canvas",
+        purpose: "Render the generated interface in the right context.",
+        mobileTreatment: mobile
+          ? "Use a compact app-like preview with clear tap targets."
+          : "Use a full-width responsive canvas with clear hierarchy.",
+        keyElements: ["Rendered UI", "Code output", "Interaction preview"]
+      },
+      {
+        name: "Handoff",
+        purpose: "Expose the generated structure for iteration.",
+        mobileTreatment: "Separate HTML, CSS, and JS into compact blocks.",
+        keyElements: ["HTML", "CSS", "JS"]
+      }
+    ]
+  };
+}
+
+function buildLocalPrototype(form: FormState): PrototypeCode {
+  const mobile = form.platform.toLowerCase().includes("mobile");
+  const title = form.product || "Generated Design";
+  const action = form.goal || "Move through the primary flow";
+  const accent = form.colors.toLowerCase().includes("blue") ? "#3b82f6" : "#22c55e";
+
+  return {
+    title,
+    html: `
+<main class="${mobile ? "mobile-product" : "web-product"}">
+  <section class="hero">
+    <p class="label">${form.platform}</p>
+    <h1>${escapeHtml(title)}</h1>
+    <p>${escapeHtml(form.prompt)}</p>
+    <button data-primary>${escapeHtml(action)}</button>
+  </section>
+  <section class="feature-grid">
+    <article>
+      <span>01</span>
+      <strong>Audience fit</strong>
+      <p>${escapeHtml(form.audience || "Clear guidance for the intended user.")}</p>
+    </article>
+    <article>
+      <span>02</span>
+      <strong>Visual system</strong>
+      <p>${escapeHtml(form.style || "Polished, modern, and easy to scan.")}</p>
+    </article>
+    <article>
+      <span>03</span>
+      <strong>Next action</strong>
+      <p>${escapeHtml(action)}</p>
+    </article>
+  </section>
+</main>`.trim(),
+    css: `
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: ${mobile ? "#f8f1e5" : "#eef4f8"};
+  color: #151515;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+main {
+  min-height: 100vh;
+  padding: ${mobile ? "16px" : "28px"};
+}
+.hero {
+  background: #151515;
+  border-radius: ${mobile ? "28px" : "24px"};
+  color: white;
+  padding: ${mobile ? "24px" : "34px"};
+}
+.label {
+  color: ${accent};
+  font-size: 12px;
+  font-weight: 900;
+  margin: 0 0 10px;
+  text-transform: uppercase;
+}
+h1 {
+  font-size: ${mobile ? "34px" : "52px"};
+  letter-spacing: 0;
+  line-height: .98;
+  margin: 0;
+}
+.hero p:last-of-type {
+  color: rgba(255,255,255,.72);
+  line-height: 1.5;
+  max-width: 680px;
+}
+button {
+  background: ${accent};
+  border: 0;
+  border-radius: 16px;
+  color: #111;
+  font-weight: 900;
+  min-height: 48px;
+  padding: 0 18px;
+}
+.feature-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: ${mobile ? "1fr" : "repeat(3, minmax(0, 1fr))"};
+  margin-top: 14px;
+}
+article {
+  background: white;
+  border: 1px solid rgba(21,21,21,.08);
+  border-radius: 20px;
+  padding: 16px;
+}
+article span {
+  color: ${accent};
+  font-size: 12px;
+  font-weight: 900;
+}
+article strong {
+  display: block;
+  margin-top: 8px;
+}
+article p {
+  color: #68635d;
+  line-height: 1.45;
+  margin-bottom: 0;
+}`.trim(),
+    js: `
+document.querySelector('[data-primary]')?.addEventListener('click', (event) => {
+  event.currentTarget.textContent = 'Flow selected';
+});`.trim()
+  };
+}
+
+function composePrototypeDocument(prototype: PrototypeCode) {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeHtml(prototype.title)}</title>
+  <style>${prototype.css}</style>
+</head>
+<body>
+${prototype.html}
+<script>${prototype.js.replace(/<\/script/gi, "<\\/script")}</script>
+</body>
+</html>`;
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function readUsers(): StoredUser[] {
   const stored = window.localStorage.getItem(authUsersStorageKey);
   if (!stored) {
@@ -863,6 +1239,24 @@ async function hashPassword(password: string) {
   return Array.from(new Uint8Array(digest))
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
+}
+
+function CodeBlock({
+  label,
+  value
+}: Readonly<{
+  label: string;
+  value: string;
+}>) {
+  return (
+    <section className="code-block">
+      <div>
+        <strong>{label}</strong>
+        <span>Plain code</span>
+      </div>
+      <pre>{value}</pre>
+    </section>
+  );
 }
 
 function SpecGroup({

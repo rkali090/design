@@ -272,12 +272,17 @@ button {
   order: 2;
 }
 
-.spec-panel {
+.code-panel {
   order: 3;
+}
+
+.spec-panel {
+  order: 4;
 }
 
 .composer-panel,
 .simulator-panel,
+.code-panel,
 .spec-panel {
   background: rgba(255, 250, 242, 0.9);
   border: 1px solid rgba(17, 18, 20, 0.1);
@@ -421,6 +426,7 @@ fieldset {
 
 .device-switcher,
 .handoff-actions,
+.prototype-actions,
 .utility-row {
   display: grid;
   gap: 8px;
@@ -433,11 +439,13 @@ fieldset {
 }
 
 .handoff-actions,
+.prototype-actions,
 .utility-row {
   margin-bottom: 12px;
 }
 
-.handoff-actions {
+.handoff-actions,
+.prototype-actions {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
@@ -447,6 +455,7 @@ fieldset {
 
 .device-switcher button,
 .handoff-actions button,
+.prototype-actions button,
 .utility-row button,
 .snapshot-list button {
   background: white;
@@ -754,6 +763,73 @@ fieldset {
   padding: 8px 10px;
 }
 
+.prototype-render {
+  background: #111214;
+  border-radius: 24px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  display: grid;
+  justify-items: center;
+  margin-bottom: 14px;
+  padding: 14px;
+}
+
+.prototype-render iframe {
+  background: white;
+  border: 0;
+  border-radius: 18px;
+  height: 560px;
+  max-width: 100%;
+  width: 100%;
+}
+
+.prototype-render.mobile-frame iframe {
+  aspect-ratio: 9 / 18;
+  height: auto;
+  max-height: 720px;
+  width: min(100%, 390px);
+}
+
+.code-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.code-block {
+  background: #111214;
+  border-radius: 18px;
+  color: white;
+  overflow: hidden;
+}
+
+.code-block > div {
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.code-block strong {
+  font-size: 12px;
+}
+
+.code-block span {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 12px;
+}
+
+.code-block pre {
+  color: #e8efe9;
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 0;
+  max-height: 280px;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .snapshot-list {
   display: grid;
   gap: 8px;
@@ -803,6 +879,7 @@ fieldset {
     align-items: start;
     grid-template-areas:
       "composer simulator"
+      "code code"
       "spec spec";
     grid-template-columns: minmax(0, 1fr) minmax(310px, 0.82fr);
   }
@@ -820,6 +897,10 @@ fieldset {
     gap: 14px;
     grid-area: spec;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .code-panel {
+    grid-area: code;
   }
 
   .spec-panel .panel-heading {
@@ -857,12 +938,14 @@ fieldset {
     align-items: start;
     grid-template-areas:
       "composer simulator"
+      "code code"
       "spec spec";
     grid-template-columns: minmax(390px, 0.9fr) minmax(430px, 1.1fr);
   }
 
   .composer-panel,
   .simulator-panel,
+  .code-panel,
   .spec-panel {
     border-radius: 32px;
     padding: 20px;
@@ -881,6 +964,23 @@ fieldset {
     gap: 14px;
     grid-area: spec;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .code-panel {
+    display: grid;
+    gap: 14px;
+    grid-area: code;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 0.75fr);
+  }
+
+  .code-panel .panel-heading,
+  .code-panel .prototype-actions {
+    grid-column: 1 / -1;
+    margin-bottom: 0;
+  }
+
+  .code-grid {
+    align-self: start;
   }
 
   .spec-panel .panel-heading {
@@ -972,7 +1072,7 @@ fieldset {
     border-radius: 16px;
     display: grid;
     gap: 6px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     margin: 0 auto 10px;
     max-width: 1240px;
     padding: 6px;
@@ -995,6 +1095,7 @@ fieldset {
 
   .studio-grid > .composer-panel,
   .studio-grid > .simulator-panel,
+  .studio-grid > .code-panel,
   .studio-grid > .spec-panel {
     display: none;
   }
@@ -1009,6 +1110,7 @@ fieldset {
 
   .composer-panel,
   .simulator-panel,
+  .code-panel,
   .spec-panel {
     border-radius: 20px;
     padding: 12px;
@@ -1056,6 +1158,7 @@ fieldset {
 
   .device-switcher button,
   .handoff-actions button,
+  .prototype-actions button,
   .utility-row button {
     border-radius: 12px;
     min-height: 34px;
@@ -1063,6 +1166,7 @@ fieldset {
   }
 
   .handoff-actions,
+  .prototype-actions,
   .utility-row {
     gap: 6px;
     margin-bottom: 10px;
@@ -1099,6 +1203,29 @@ fieldset {
     overflow: hidden;
     padding: 12px;
     width: 100%;
+  }
+
+  .prototype-render {
+    border-radius: 18px;
+    margin-bottom: 10px;
+    padding: 10px;
+  }
+
+  .prototype-render iframe {
+    border-radius: 14px;
+    height: 480px;
+  }
+
+  .prototype-render.mobile-frame iframe {
+    width: min(100%, 360px);
+  }
+
+  .code-block {
+    border-radius: 14px;
+  }
+
+  .code-block pre {
+    max-height: 210px;
   }
 
   .phone-status {
@@ -1199,6 +1326,7 @@ fieldset {
 
   .composer-panel,
   .simulator-panel,
+  .code-panel,
   .spec-panel {
     border-radius: 18px;
     padding: 10px;
