@@ -611,6 +611,60 @@ fieldset {
   }
 }
 
+@media (min-width: 760px) and (max-width: 1079px) {
+  .studio-grid {
+    align-items: start;
+    grid-template-areas:
+      "composer simulator"
+      "spec spec";
+    grid-template-columns: minmax(0, 1fr) minmax(310px, 0.82fr);
+  }
+
+  .composer-panel {
+    grid-area: composer;
+  }
+
+  .simulator-panel {
+    grid-area: simulator;
+  }
+
+  .spec-panel {
+    display: grid;
+    gap: 14px;
+    grid-area: spec;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .spec-panel .panel-heading {
+    grid-column: 1 / -1;
+    margin-bottom: 0;
+  }
+
+  .spec-group {
+    border-top: 0;
+    padding: 0;
+  }
+
+  .phone-frame {
+    border-width: 6px;
+    border-radius: 30px;
+    padding: 14px;
+    width: min(100%, 340px);
+  }
+
+  .preview-hero h2 {
+    font-size: 28px;
+  }
+
+  .action-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .action-strip span {
+    text-align: left;
+  }
+}
+
 @media (min-width: 1080px) {
   .studio-grid {
     align-items: start;
@@ -663,13 +717,15 @@ fieldset {
   }
 }
 
-@media (max-width: 430px) {
+@media (max-width: 759px) {
   .app-shell {
-    padding: 8px;
+    padding: 10px;
   }
 
   .topbar {
-    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
   }
 
   .docs-link {
@@ -680,8 +736,8 @@ fieldset {
 
   .brand-mark > span {
     border-radius: 12px;
-    height: 36px;
-    width: 36px;
+    height: 38px;
+    width: 38px;
   }
 
   .brand-mark small {
@@ -694,7 +750,7 @@ fieldset {
   }
 
   .hero-band h1 {
-    font-size: 27px;
+    font-size: clamp(28px, 7.5vw, 38px);
     line-height: 1.03;
     margin-top: 5px;
   }
@@ -705,20 +761,20 @@ fieldset {
   }
 
   .studio-grid {
-    gap: 10px;
+    gap: 12px;
   }
 
   .composer-panel,
   .simulator-panel,
   .spec-panel {
-    border-radius: 18px;
-    padding: 10px;
+    border-radius: 20px;
+    padding: 12px;
   }
 
   .prompt-label textarea {
-    border-radius: 18px;
+    border-radius: 20px;
     font-size: 15px;
-    min-height: 124px;
+    min-height: 136px;
   }
 
   input,
@@ -776,7 +832,7 @@ fieldset {
     aspect-ratio: auto;
     border-width: 6px;
     border-radius: 28px;
-    max-width: 100%;
+    max-width: 420px;
     overflow: visible;
     padding: 12px;
     width: 100%;
@@ -791,7 +847,7 @@ fieldset {
   }
 
   .preview-hero h2 {
-    font-size: 25px;
+    font-size: clamp(24px, 6.7vw, 30px);
   }
 
   .color-dots {
@@ -859,6 +915,33 @@ fieldset {
   .spec-row {
     border-radius: 14px;
     padding: 10px;
+  }
+}
+
+@media (max-width: 430px) {
+  .app-shell {
+    padding: 8px;
+  }
+
+  .topbar {
+    margin-bottom: 10px;
+  }
+
+  .brand-mark > span {
+    height: 36px;
+    width: 36px;
+  }
+
+  .composer-panel,
+  .simulator-panel,
+  .spec-panel {
+    border-radius: 18px;
+    padding: 10px;
+  }
+
+  .prompt-label textarea {
+    border-radius: 18px;
+    min-height: 124px;
   }
 }
 
