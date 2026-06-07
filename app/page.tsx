@@ -300,13 +300,14 @@ const snapshotsStorageKey = "design-studio-snapshots";
 
 export default function Home() {
   const [activePanel, setActivePanel] = useState<PanelTab>("compose");
+  const [showAuth, setShowAuth] = useState(false);
   const [authForm, setAuthForm] = useState<AuthForm>({
     email: "",
     name: "",
     password: ""
   });
   const [authMode, setAuthMode] = useState<AuthMode>("signin");
-  const [authReady, setAuthReady] = useState(false);
+  const [authReady, setAuthReady] = useState(true);
   const [currentUser, setCurrentUser] = useState<StoredUser | null>(null);
   const [form, setForm] = useState<FormState>(initialForm);
   const [design, setDesign] = useState<DesignSpec>(sampleDesign);
@@ -534,6 +535,23 @@ export default function Home() {
   }
 
   if (!currentUser) {
+    if (!showAuth) {
+      return (
+        <LandingPage
+          onCreateAccount={() => {
+            setAuthMode("signup");
+            setShowAuth(true);
+            setError("");
+          }}
+          onSignIn={() => {
+            setAuthMode("signin");
+            setShowAuth(true);
+            setError("");
+          }}
+        />
+      );
+    }
+
     return (
       <main className="auth-shell">
         <section className="auth-card">
@@ -602,6 +620,17 @@ export default function Home() {
           <p className="auth-note">
             Your workspace stays signed in on this device.
           </p>
+
+          <button
+            className="auth-back"
+            onClick={() => {
+              setShowAuth(false);
+              setError("");
+            }}
+            type="button"
+          >
+            Back to overview
+          </button>
         </section>
       </main>
     );
@@ -992,6 +1021,259 @@ export default function Home() {
             )}
           </SpecGroup>
         </section>
+      </section>
+    </main>
+  );
+}
+
+function LandingPage({
+  onCreateAccount,
+  onSignIn
+}: Readonly<{
+  onCreateAccount: () => void;
+  onSignIn: () => void;
+}>) {
+  const featureItems = [
+    {
+      title: "Prompt to UI",
+      text: "Turn a product idea into a rendered screen with matching HTML, CSS, and JS."
+    },
+    {
+      title: "Mobile simulator",
+      text: "Preview SE, iPhone, Pixel, and Fold widths before handing anything off."
+    },
+    {
+      title: "Handoff-ready",
+      text: "Export specs, palette, type, component states, and a complete HTML file."
+    },
+    {
+      title: "Saved directions",
+      text: "Keep snapshots of strong concepts and restore them while exploring options."
+    }
+  ];
+
+  const workflowItems = [
+    "Describe the product, audience, style, colors, and goal.",
+    "Pick mobile app, landing page, dashboard, or storefront framing.",
+    "Generate a rendered prototype plus code and a design handoff.",
+    "Copy, download, save, and iterate inside the same workspace."
+  ];
+
+  const useCases = [
+    "Founder app concepts",
+    "Storefront redesigns",
+    "Mobile checkout flows",
+    "Dashboard first passes",
+    "Client ideation",
+    "Developer handoff"
+  ];
+
+  const planItems = [
+    {
+      name: "Prototype",
+      price: "Fast",
+      text: "For quick mobile ideas, rendered previews, and shareable HTML exports."
+    },
+    {
+      name: "Studio",
+      price: "Focused",
+      text: "For saved directions, handoff specs, and repeated product exploration."
+    },
+    {
+      name: "Team",
+      price: "Ready",
+      text: "For turning rough briefs into consistent mobile-first UI systems."
+    }
+  ];
+
+  const faqItems = [
+    {
+      question: "Can it generate actual code?",
+      answer: "Yes. The workspace produces plain HTML, CSS, and JavaScript and renders it directly in the app."
+    },
+    {
+      question: "Is it mobile-first?",
+      answer: "Yes. Mobile app framing, device presets, and responsive previews are the default workflow."
+    },
+    {
+      question: "Can I keep previous ideas?",
+      answer: "Yes. Save snapshots and restore design directions when you want to compare concepts."
+    }
+  ];
+
+  return (
+    <main className="landing-shell">
+      <nav className="landing-nav" aria-label="Marketing">
+        <div className="brand-mark">
+          <span>D</span>
+          <div>
+            <strong>Design</strong>
+            <small>AI product studio</small>
+          </div>
+        </div>
+        <div className="landing-nav-actions">
+          <a href="#features">Features</a>
+          <a href="#workflow">Workflow</a>
+          <button onClick={onSignIn} type="button">
+            Sign in
+          </button>
+        </div>
+      </nav>
+
+      <section className="landing-hero">
+        <div className="landing-copy">
+          <span className="eyebrow">Mobile-first AI design builder</span>
+          <h1>Describe a product. Launch a polished UI direction.</h1>
+          <p>
+            Design turns a rough prompt into a rendered prototype, implementation-ready code,
+            and a handoff spec for web or mobile app ideas.
+          </p>
+          <div className="landing-actions">
+            <button onClick={onCreateAccount} type="button">
+              Start designing
+            </button>
+            <button onClick={onSignIn} type="button">
+              Open workspace
+            </button>
+          </div>
+          <div className="landing-proof" aria-label="Product capabilities">
+            <span>Plain HTML/CSS/JS</span>
+            <span>Device previews</span>
+            <span>Handoff export</span>
+          </div>
+        </div>
+
+        <div className="landing-preview" aria-label="Design app preview">
+          <div className="landing-preview-bar">
+            <span>Design workspace</span>
+            <strong>Live preview</strong>
+          </div>
+          <div className="landing-phone">
+            <div className="phone-status">
+              <span>9:41</span>
+              <span>Prototype</span>
+            </div>
+            <div className="preview-hero">
+              <div>
+                <span className="mini-label">Generated concept</span>
+                <h2>FrameFlow Checkout</h2>
+              </div>
+              <div className="color-dots" aria-label="Preview palette">
+                <span style={{ background: "#171717" }} />
+                <span style={{ background: "#22c55e" }} />
+                <span style={{ background: "#3b82f6" }} />
+                <span style={{ background: "#fb7185" }} />
+              </div>
+            </div>
+            <p className="summary">
+              A guided mobile flow for comparing frames, confirming fit, and checking out
+              with confidence.
+            </p>
+            <div className="landing-preview-card">
+              <span>01</span>
+              <strong>Generated UI</strong>
+              <p>Hero, cards, CTA, layout, and interaction code.</p>
+            </div>
+            <div className="landing-code-lines" aria-label="Generated code sample">
+              <span />
+              <span />
+              <span />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="landing-strip" aria-label="Core metrics">
+        <div>
+          <strong>4</strong>
+          <span>output frames</span>
+        </div>
+        <div>
+          <strong>3</strong>
+          <span>handoff formats</span>
+        </div>
+        <div>
+          <strong>1</strong>
+          <span>focused workspace</span>
+        </div>
+      </section>
+
+      <section className="landing-section" id="features">
+        <div className="landing-section-heading">
+          <span className="eyebrow">Features</span>
+          <h2>Everything needed for a believable first prototype.</h2>
+        </div>
+        <div className="landing-feature-grid">
+          {featureItems.map((item) => (
+            <article key={item.title}>
+              <span>{item.title}</span>
+              <p>{item.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="landing-section landing-workflow" id="workflow">
+        <div className="landing-section-heading">
+          <span className="eyebrow">Workflow</span>
+          <h2>From prompt to rendered interface in one loop.</h2>
+        </div>
+        <ol>
+          {workflowItems.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="landing-section landing-usecases">
+        <div className="landing-section-heading">
+          <span className="eyebrow">Use cases</span>
+          <h2>Built for the early design decisions that usually slow teams down.</h2>
+        </div>
+        <div className="landing-chip-grid">
+          {useCases.map((item) => (
+            <span key={item}>{item}</span>
+          ))}
+        </div>
+      </section>
+
+      <section className="landing-section">
+        <div className="landing-section-heading">
+          <span className="eyebrow">Plans</span>
+          <h2>Shape the idea before investing in full product design.</h2>
+        </div>
+        <div className="landing-plan-grid">
+          {planItems.map((plan) => (
+            <article key={plan.name}>
+              <span>{plan.name}</span>
+              <strong>{plan.price}</strong>
+              <p>{plan.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="landing-section landing-faq">
+        <div className="landing-section-heading">
+          <span className="eyebrow">FAQ</span>
+          <h2>Clear enough for makers, practical enough for handoff.</h2>
+        </div>
+        <div>
+          {faqItems.map((item) => (
+            <details key={item.question}>
+              <summary>{item.question}</summary>
+              <p>{item.answer}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section className="landing-cta">
+        <span className="eyebrow">Ready</span>
+        <h2>Start with a prompt and leave with a prototype.</h2>
+        <button onClick={onCreateAccount} type="button">
+          Create workspace
+        </button>
       </section>
     </main>
   );
