@@ -87,7 +87,7 @@ const sampleDesign: DesignSpec = {
       purpose: "Let the maker describe a full screen in one natural-language request.",
       mobileTreatment:
         "Large sticky composer with a one-tap generate button and compact advanced controls.",
-      keyElements: ["Prompt box", "Generate button", "Model selector", "Key field"]
+      keyElements: ["Prompt box", "Generate button", "Model selector", "Key safety badge"]
     },
     {
       name: "Mobile Simulator",
@@ -124,7 +124,7 @@ const sampleDesign: DesignSpec = {
   microcopy: ["Ask Vertex to design", "Mobile preview", "Ready for handoff"],
   implementationNotes: [
     "Use the server route for private keys on real deployments.",
-    "GitHub Pages can only use the optional browser key field because it is static hosting.",
+    "GitHub Pages stays a static preview and never accepts API keys.",
     "Keep simulator cards fixed-height enough to avoid shifting while content changes."
   ]
 };
@@ -435,7 +435,7 @@ export default function Home() {
 
 async function generateFromServer(form: FormState): Promise<DesignSpec> {
   if (isStaticExport) {
-    throw new Error("Add a Vertex API key to generate from the GitHub Pages version.");
+    throw new Error("Live generation is disabled on GitHub Pages. Deploy the Next.js server with `.env.local` to enable Vertex.");
   }
 
   const response = await fetch("/api/generate-design", {
